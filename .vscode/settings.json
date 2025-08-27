@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "utils.h": "c",
+        "radix_tree.h": "c",
+        "rb_tree.h": "c"
+    }
+}
