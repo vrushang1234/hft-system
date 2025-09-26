@@ -1,0 +1,29 @@
+{
+  "name": "hft-system",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/vrushang1234/hft-system#readme",
+  "bugs": {
+    "url": "https://github.com/vrushang1234/hft-system/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrushang1234/hft-system.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format:ui": "cd ui && npm run format",
+    "format:rl": "cd rl-environment && npm run format"
+  },
+  "devDependencies": {
+    "@fastify/pre-commit": "^2.2.0"
+  },
+  "pre-commit":{
+      "format:ui",
+      "format:rl"
+  }
+}
