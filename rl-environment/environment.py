@@ -1,12 +1,15 @@
 import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
+from gymnasium import spaces
+
 
 class HFTEnv(gym.Env):
     def __init__(self):
         super().__init__()
         self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(low=-10, high=10, shape=(1,), dtype=np.float32)
+        self.observation_space = spaces.Box(
+            low=-10, high=10, shape=(1,), dtype=np.float32
+        )
 
         self.state = np.zeros(1, dtype=np.float32)
         self.steps = 0
@@ -16,7 +19,7 @@ class HFTEnv(gym.Env):
         super().reset(seed=seed)
         self.state[:] = 0.0
         self.steps = 0
-        return self.state.copy(), {}   
+        return self.state.copy(), {}
 
     def step(self, action):
         a = int(action)
@@ -29,4 +32,3 @@ class HFTEnv(gym.Env):
         truncated = bool(self.steps >= self.max_steps)
 
         return self.state.copy(), float(reward), terminated, truncated, {}
-
