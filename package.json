@@ -22,8 +22,8 @@
   "devDependencies": {
     "@fastify/pre-commit": "^2.2.0"
   },
-  "pre-commit":{
+  "pre-commit":[
       "format:ui",
       "format:rl"
-  }
+  ]
 }
