@@ -120,8 +120,7 @@ void radix_print_children(radix_node *root)
 {
     radix_node *curr_node = root;
     for (int i = 0; curr_node->children[i] != NULL; i++)
-    {
-        printf("%s ", curr_node->children[i]->val);
-    }
+        if (curr_node->eow)
+            printf("%s ", curr_node->children[i]->val);
     printf("\n");
 }
