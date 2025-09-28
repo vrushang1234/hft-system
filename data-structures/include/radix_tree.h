@@ -13,7 +13,7 @@ typedef struct radix_node
     bool eow; // end of word
 } radix_node;
 
-radix_node *create_radix_tree();
+radix_node *create_radix_tree(const char *init_val);
 
 void radix_add(radix_node *root, const char *value);
 
