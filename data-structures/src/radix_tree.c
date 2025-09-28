@@ -13,6 +13,14 @@ radix_node *create_radix_tree(const char *init_val)
     return root;
 }
 
+/*
+This function adds a node to an existing radix tree
+
+Input: root, the root of the radix tree to add to
+       value, the value of the new node that will be added
+
+Output: nothing to return, the new node is added in place
+*/
 void radix_add(radix_node *root, const char *value)
 {
     radix_node *curr_node = root;
@@ -40,13 +48,13 @@ void radix_add(radix_node *root, const char *value)
                     found_path = true;
                     break;
                 }
-                else if (prefix < strlen(curr_child->val))
+                else if (prefix < strlen(curr_child->val)) // reached end of matching existing nodes
                 {
                     char *curr_child_suffix = strdup(&curr_child->val[prefix]);
 
                     radix_node *temp = create_radix_tree(curr_child_suffix);
 
-                    if (matched != strlen(value)) // new value is a partial match with existing value
+                    if (matched != strlen(value)) // new value is a partial match with an existing value (i.e "Biggest", "Bigger")
                     {
                         char *value_suffix = strdup(&value[matched]);
                         radix_node *add_child = create_radix_tree(value_suffix);
@@ -58,7 +66,7 @@ void radix_add(radix_node *root, const char *value)
                         curr_child->children[j++] = add_child;
                         curr_child->children[j] = temp;
                     }
-                    else // new value is a substr of existing value
+                    else // new value is a substr of an existing value (i.e "Big", "Bigger")
                     {
                         for (unsigned short j = 0; curr_child->children[j]; j++)
                             temp->children[j] = curr_child->children[j];
