@@ -19,7 +19,7 @@ int main()
     radix_add(a, "Booker");
 
     // radix_print_tree(a);
-    radix_add(a, "Book");
+    // radix_add(a, "Book");
 
     radix_print_tree(a);
     // radix_print_tree(a->children[0]);

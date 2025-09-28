@@ -18,44 +18,54 @@ void radix_add(radix_node *root, const char *value)
     radix_node *curr_node = root;
     radix_node *curr_child;
 
-    bool found_path;
+    bool found_path = true;
 
     unsigned short matched = 0;
     unsigned short new_val_len = strlen(value);
 
-    while (1)
+    while (found_path)
     {
         found_path = false;
         for (unsigned short i = 0; curr_node->children[i]; i++)
         {
             curr_child = curr_node->children[i];
-
             unsigned short prefix = str_prefix(&value[matched], curr_child->val);
 
             if (prefix > 0)
             {
                 matched += prefix;
-
-                if (matched < strlen(value)) // not done matching prefixes
+                if (matched < strlen(value) && prefix == strlen(curr_child->val)) // not done matching prefixes
                 {
-
                     curr_node = curr_child;
                     found_path = true;
                     break;
                 }
-                else if (strlen(curr_child->val) > prefix) // new value is a substr of existing value
+                else if (prefix < strlen(curr_child->val))
                 {
-                    char *suffix = strdup(&curr_child->val[prefix]);
+                    char *curr_child_suffix = strdup(&curr_child->val[prefix]);
 
-                    radix_node *temp = create_radix_tree(suffix);
+                    radix_node *temp = create_radix_tree(curr_child_suffix);
 
-                    unsigned short i = 0;
-                    for (; curr_child->children[i]; i++)
-                        temp->children[i] = curr_child->children[i];
+                    if (matched != strlen(value)) // new value is a partial match with existing value
+                    {
+                        char *value_suffix = strdup(&value[matched]);
+                        radix_node *add_child = create_radix_tree(value_suffix);
 
+                        unsigned short j = 0;
+                        for (; curr_child->children[j]; j++)
+                            temp->children[j] = curr_child->children[j];
+
+                        curr_child->children[j++] = add_child;
+                        curr_child->children[j] = temp;
+                    }
+                    else // new value is a substr of existing value
+                    {
+                        for (unsigned short j = 0; curr_child->children[j]; j++)
+                            temp->children[j] = curr_child->children[j];
+
+                        curr_child->children[0] = temp;
+                    }
                     curr_child->val[prefix] = 0; // any bugs most likely from here
-
-                    curr_child->children[0] = temp;
                 }
                 else
                 { // new value is the same as an existing value
@@ -64,8 +74,6 @@ void radix_add(radix_node *root, const char *value)
                 return;
             }
         }
-        if (!found_path)
-            break;
     }
     unsigned short append_idx = 0;
     while (curr_node->children[append_idx])
@@ -133,25 +141,26 @@ bool radix_rec_search(radix_node *node, const char *value)
     return false;
 }
 
-void radix_print_children(radix_node *root)
-{
-    radix_node *curr_node = root;
-    for (int i = 0; curr_node->children[i]; i++)
-    {
-        if (curr_node->eow)
-            printf("%s ", curr_node->children[i]->val);
-        radix_print_children(curr_node->children[i]);
-    }
-}
-
 void radix_print_tree(radix_node *root)
 {
+    radix_node **stack = malloc(RADIX_CHILD_SIZE * sizeof(radix_node *));
     radix_node *curr_node = root;
-    for (int i = 0; curr_node->children[i]; i++)
+
+    unsigned short depth = 0, i = 0, j;
+    while (curr_node)
     {
-        if (curr_node->eow)
-            printf("%s ", curr_node->children[i]->val);
-        radix_print_children(curr_node->children[i]);
-        printf("\n");
+        for (j = 0; curr_node->children[j]; j++)
+            stack[++i] = curr_node->children[j];
+
+        printf("%s ", curr_node->val);
+        if (!j)
+            printf("\n%*s", 2 * depth--, "");
+        else
+            depth++;
+        curr_node = stack[i];
+
+        stack[i--] == NULL;
     }
+
+    free(stack);
 }
