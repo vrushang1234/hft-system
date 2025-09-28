@@ -1,5 +1,6 @@
 from stable_baselines3 import PPO
-from environment import HFTEnv 
+
+from environment import HFTEnv
 
 env = HFTEnv()
 model = PPO("MlpPolicy", env, verbose=1)
