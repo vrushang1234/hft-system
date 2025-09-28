@@ -23,4 +23,4 @@ bool radix_search(radix_node *root, const char *value);
 
 bool radix_rec_search(radix_node *node, const char *value);
 
-void radix_print(radix_node *root);
+void radix_print_tree(radix_node *root);
