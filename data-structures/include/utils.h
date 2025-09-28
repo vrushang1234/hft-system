@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #define RADIX_CHILD_SIZE 256
 
