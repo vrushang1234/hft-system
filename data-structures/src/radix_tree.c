@@ -89,6 +89,14 @@ void radix_add(radix_node *root, const char *value)
     curr_node->children[append_idx] = create_radix_tree(&value[matched]);
 }
 
+/*
+This function removes a node from an existing radix tree
+
+Input: root, the root of the radix tree to remove from
+       value, the value of the node that will be removed
+
+Output: nothing to return
+*/
 void radix_del(radix_node *root, const char *value)
 {
     radix_node *curr_node = root;
