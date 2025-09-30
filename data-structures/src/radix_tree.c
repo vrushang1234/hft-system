@@ -26,7 +26,7 @@ void radix_add(radix_node *root, const char *value)
     radix_node *curr_node = root;
     radix_node *curr_child;
 
-    bool found_path = true;
+    bool found_path = true; // whether a node with a matching prefix was found in the curr_node's children
 
     unsigned short matched = 0;
     unsigned short new_val_len = strlen(value);
