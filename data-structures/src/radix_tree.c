@@ -1,4 +1,5 @@
 #include "radix_tree.h"
+#include "utils.h"
 
 radix_node *create_radix_tree(const char *init_val)
 {
@@ -73,7 +74,7 @@ void radix_add(radix_node *root, const char *value)
 
                         curr_child->children[0] = temp;
                     }
-                    curr_child->val[prefix] = 0; // any bugs most likely from here
+                    curr_child->val[prefix] = 0;
                 }
                 else
                 { // new value is the same as an existing value
@@ -100,33 +101,45 @@ Output: nothing to return
 void radix_del(radix_node *root, const char *value)
 {
     radix_node *curr_node = root;
-    unsigned short value_idx = 0;
-    while (1)
+    radix_node *curr_child;
+
+    unsigned short matched = 0;
+    bool found_path = true; // whether a node with a matching prefix was found in the curr_node's children
+
+    while (found_path)
     {
+        found_path = false;
         for (unsigned short i = 0; curr_node->children[i]; i++)
         {
-            unsigned short prefix = str_prefix(&value[value_idx], curr_node->children[i]->val);
+            curr_child = curr_node->children[i];
+            unsigned short prefix = str_prefix(&value[matched], curr_child->val);
+
             if (prefix > 0)
             {
-                if (prefix + value_idx == strlen(value))
+                matched += prefix;
+                if (matched < strlen(value) && prefix == strlen(curr_child->val)) // not done matching prefixes
                 {
-                    if (curr_node->children[i]->val[prefix] == '\0')
+                    curr_node = curr_child;
+                    found_path = true;
+                    break;
+                }
+                else if (prefix == strlen(curr_child->val)) // new value is the same as an existing value
+                {
+                    if (curr_child->children[0])
                     {
-                        radix_node *rm_node = curr_node->children[i];
-                        unsigned short j = i + 1;
-                        while (curr_node->children[j])
-                            j++;
-                        memmove(&curr_node->children[i], &curr_node->children[i + 1], (j - i - 1) * sizeof(radix_node *));
-                        curr_node->children[j - 1] = NULL;
-                        // for (int k = 0; rm_node->children[k]; k++)
-
-                        free(rm_node);
+                        curr_child->eow = false;
                     }
+                    else
+                    {
+                        free(curr_child->val);
+                        free(curr_child);
+                        curr_node->children[i++] = NULL;
+                        for (; curr_node->children[i]; i++)
+                            curr_node->children[i - 1] = curr_node->children[i];
+                    }
+                    // otherwise no match was found, do nothing or return false
                     return;
                 }
-                value_idx += prefix;
-                curr_node = curr_node->children[i];
-                break;
             }
         }
     }
@@ -134,26 +147,37 @@ void radix_del(radix_node *root, const char *value)
 
 bool radix_search(radix_node *root, const char *value)
 {
-    for (unsigned short i = 0; root->children[i]; i++)
-        if (radix_rec_search(root->children[i], value))
-            return true;
-    return false;
-}
+    radix_node *curr_node = root;
+    radix_node *curr_child;
 
-bool radix_rec_search(radix_node *node, const char *value)
-{
-    if (node->val == NULL)
-        return false;
-    unsigned short pre_len = str_prefix(node->val, value);
-    if (!pre_len)
-        return false;
-    else if (pre_len == strlen(value))
-        return true;
+    unsigned short matched = 0;
+    bool found_path = true; // whether a node with a matching prefix was found in the curr_node's children
 
-    char *new_val = &value[pre_len];
-    for (unsigned short i = 0; node->children[i]; i++)
-        if (radix_rec_search(node->children[i], new_val))
-            return true;
+    while (found_path)
+    {
+        found_path = false;
+        for (unsigned short i = 0; curr_node->children[i]; i++)
+        {
+            curr_child = curr_node->children[i];
+            unsigned short prefix = str_prefix(&value[matched], curr_child->val);
+
+            if (prefix > 0)
+            {
+                matched += prefix;
+                if (matched < strlen(value) && prefix == strlen(curr_child->val)) // not done matching prefixes
+                {
+                    curr_node = curr_child;
+                    found_path = true;
+                    break;
+                }
+                else if (prefix == strlen(curr_child->val) && curr_child->eow) // new value is the same as an existing value
+                {
+                    return true;
+                }
+                return false; // otherwise no match was found, do nothing or return false
+            }
+        }
+    }
     return false;
 }
 
@@ -161,6 +185,7 @@ void radix_print_tree(radix_node *root)
 {
     radix_node **stack = malloc(RADIX_CHILD_SIZE * sizeof(radix_node *));
     radix_node *curr_node = root;
+    char *eow_prefix = malloc(128 * sizeof(char));
 
     unsigned short depth = 0, i = 0, j;
     while (curr_node)
@@ -168,13 +193,23 @@ void radix_print_tree(radix_node *root)
         for (j = 0; curr_node->children[j]; j++)
             stack[++i] = curr_node->children[j];
 
-        printf("%s ", curr_node->val);
+        if (!curr_node->eow)
+        {
+            prepend(eow_prefix, curr_node->val);
+        }
+        else
+        {
+            printf("%s%s ", eow_prefix, curr_node->val);
+        }
         if (!j)
+        {
+            eow_prefix[0] = '\0';
             printf("\n%*s", 2 * depth--, "");
+        }
         else
             depth++;
-        curr_node = stack[i];
 
+        curr_node = stack[i];
         stack[i--] == NULL;
     }
 
