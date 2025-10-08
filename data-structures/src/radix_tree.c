@@ -24,13 +24,13 @@ Output: nothing to return, the new node is added in place
 */
 void radix_add(radix_node *root, const char *value)
 {
-    radix_node *curr_node = root;
+    if radix_node
+        *curr_node = root;
     radix_node *curr_child;
 
     bool found_path = true; // whether a node with a matching prefix was found in the curr_node's children
 
     unsigned short matched = 0;
-    unsigned short new_val_len = strlen(value);
 
     while (found_path)
     {
@@ -60,12 +60,11 @@ void radix_add(radix_node *root, const char *value)
                         char *value_suffix = strdup(&value[matched]);
                         radix_node *add_child = create_radix_tree(value_suffix);
 
-                        unsigned short j = 0;
-                        for (; curr_child->children[j]; j++)
+                        for (unsigned short j = 0; curr_child->children[j]; j++)
                             temp->children[j] = curr_child->children[j];
 
-                        curr_child->children[j++] = add_child;
-                        curr_child->children[j] = temp;
+                        curr_child->children[0] = add_child;
+                        curr_child->children[1] = temp;
                     }
                     else // new value is a substr of an existing value (i.e "Big", "Bigger")
                     {
@@ -210,7 +209,7 @@ void radix_print_tree(radix_node *root)
             depth++;
 
         curr_node = stack[i];
-        stack[i--] == NULL;
+        stack[i--] = NULL;
     }
 
     free(stack);
