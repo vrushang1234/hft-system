@@ -55,4 +55,3 @@ dkms.conf
 *.dwo
 
 # test files
-main.c
