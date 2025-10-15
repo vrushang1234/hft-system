@@ -24,8 +24,10 @@ Output: nothing to return, the new node is added in place
 */
 void radix_add(radix_node *root, const char *value)
 {
-    if radix_node
-        *curr_node = root;
+    if (!value)
+        return;
+
+    radix_node *curr_node = root;
     radix_node *curr_child;
 
     bool found_path = true; // whether a node with a matching prefix was found in the curr_node's children
@@ -65,6 +67,7 @@ void radix_add(radix_node *root, const char *value)
 
                         curr_child->children[0] = add_child;
                         curr_child->children[1] = temp;
+                        curr_child->eow = false;
                     }
                     else // new value is a substr of an existing value (i.e "Big", "Bigger")
                     {
@@ -99,6 +102,9 @@ Output: nothing to return
 */
 void radix_del(radix_node *root, const char *value)
 {
+    if (!value)
+        return;
+
     radix_node *curr_node = root;
     radix_node *curr_child;
 
@@ -135,6 +141,7 @@ void radix_del(radix_node *root, const char *value)
                         curr_node->children[i++] = NULL;
                         for (; curr_node->children[i]; i++)
                             curr_node->children[i - 1] = curr_node->children[i];
+                        curr_node->children[i - 1] = NULL;
                     }
                     // otherwise no match was found, do nothing or return false
                     return;
@@ -146,6 +153,9 @@ void radix_del(radix_node *root, const char *value)
 
 bool radix_search(radix_node *root, const char *value)
 {
+    if (!value)
+        return false;
+
     radix_node *curr_node = root;
     radix_node *curr_child;
 
@@ -184,7 +194,7 @@ void radix_print_tree(radix_node *root)
 {
     radix_node **stack = malloc(RADIX_CHILD_SIZE * sizeof(radix_node *));
     radix_node *curr_node = root;
-    char *eow_prefix = malloc(128 * sizeof(char));
+    char *prefix = malloc(128 * sizeof(char));
 
     unsigned short depth = 0, i = 0, j;
     while (curr_node)
@@ -192,21 +202,20 @@ void radix_print_tree(radix_node *root)
         for (j = 0; curr_node->children[j]; j++)
             stack[++i] = curr_node->children[j];
 
-        if (!curr_node->eow)
+        if (curr_node->eow)
         {
-            prepend(eow_prefix, curr_node->val);
-        }
-        else
-        {
-            printf("%s%s ", eow_prefix, curr_node->val);
+            printf("%s%s ", prefix, curr_node->val);
         }
         if (!j)
         {
-            eow_prefix[0] = '\0';
+            prefix[0] = '\0';
             printf("\n%*s", 2 * depth--, "");
         }
         else
+        {
+            strcat(prefix, curr_node->val);
             depth++;
+        }
 
         curr_node = stack[i];
         stack[i--] = NULL;

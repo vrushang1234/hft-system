@@ -31,24 +31,27 @@ TEST("radix add partial prefix")
 TEST("radix add invalid value")
 {
     radix_add(root, NULL);
-    radix_print_tree(root);
-    // ASSERT(1);
+    ASSERT(1);
 }
 
-// TEST("radix del leaf")
-// {
-//     ASSERT(1);
-// }
+TEST("radix del leaf")
+{
+    radix_del(root, "House");
+    ASSERT(root->children[0]->children[1] == NULL);
+}
 
-// TEST("radix del prefix")
-// {
-//     ASSERT(1);
-// }
+TEST("radix del prefix")
+{
+    radix_del(root, "Hel");
+    printf("%i ", root->children[0]->children[0]->eow);
+    ASSERT(root->children[0]->eow == false && root->children[0]->children[0]->eow == false);
+}
 
-// TEST("radix del root")
-// {
-//     ASSERT(1);
-// }
+TEST("radix del root")
+{
+    radix_del(root, "");
+    ASSERT(root == NULL);
+}
 
 // TEST("radix del invalid value")
 // {
