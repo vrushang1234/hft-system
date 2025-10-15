@@ -19,6 +19,8 @@ void radix_add(radix_node *root, const char *value);
 
 void radix_del(radix_node *root, const char *value);
 
+void radix_del_tree(radix_node *root);
+
 bool radix_search(radix_node *root, const char *value);
 
 void radix_print_tree(radix_node *root);

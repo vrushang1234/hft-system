@@ -43,39 +43,39 @@ TEST("radix del leaf")
 TEST("radix del prefix")
 {
     radix_del(root, "Hel");
-    printf("%i ", root->children[0]->children[0]->eow);
-    ASSERT(root->children[0]->eow == false && root->children[0]->children[0]->eow == false);
+    ASSERT(root->children[0]->eow == false && root->children[0]->children[0]->eow == false && !strcmp(root->children[0]->children[0]->children[0]->val, "lo"));
+}
+
+TEST("radix del invalid value")
+{
+    radix_del(root, "abc");
+    ASSERT(root->children[0]->eow == false && root->children[0]->children[0]->eow == false && !strcmp(root->children[0]->children[0]->children[0]->val, "lo"));
+}
+
+TEST("radix search existing value")
+{
+    ASSERT(radix_search(root, "Hello"));
+}
+
+TEST("radix search non end of word")
+{
+    ASSERT(!radix_search(root, "Hel"));
+}
+
+TEST("radix search partial prefix")
+{
+    ASSERT(!radix_search(root, "Hellos"));
+}
+
+TEST("radix search invalid value")
+{
+
+    ASSERT(!radix_search(root, "Donkey"));
 }
 
 TEST("radix del root")
 {
-    radix_del(root, "");
-    ASSERT(root == NULL);
+    radix_del_tree(root);
+    ASSERT(1);
 }
-
-// TEST("radix del invalid value")
-// {
-//     ASSERT(1);
-// }
-
-// TEST("radix search existing value")
-// {
-//     ASSERT(1);
-// }
-
-// TEST("radix search non end of word")
-// {
-//     ASSERT(1);
-// }
-
-// TEST("radix search partial prefix")
-// {
-//     ASSERT(1);
-// }
-
-// TEST("radix search invalid value")
-// {
-
-//     ASSERT(1);
-// }
 #endif

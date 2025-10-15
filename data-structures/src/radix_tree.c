@@ -151,6 +151,22 @@ void radix_del(radix_node *root, const char *value)
     }
 }
 
+void radix_del_tree(radix_node *root)
+{
+    radix_node **stack = malloc(RADIX_CHILD_SIZE * sizeof(radix_node *));
+    stack[0] = NULL;
+    radix_node *curr_node = root;
+
+    unsigned short j;
+    for (unsigned short i = 0; curr_node; curr_node = stack[i], stack[i--] = NULL)
+    {
+        for (j = 0; curr_node->children[j]; j++)
+            stack[++i] = curr_node->children[j];
+        free(curr_node);
+    }
+    free(stack);
+}
+
 bool radix_search(radix_node *root, const char *value)
 {
     if (!value)
@@ -193,6 +209,7 @@ bool radix_search(radix_node *root, const char *value)
 void radix_print_tree(radix_node *root)
 {
     radix_node **stack = malloc(RADIX_CHILD_SIZE * sizeof(radix_node *));
+    stack[0] = NULL;
     radix_node *curr_node = root;
     char *prefix = malloc(128 * sizeof(char));
 
@@ -222,4 +239,5 @@ void radix_print_tree(radix_node *root)
     }
 
     free(stack);
+    free(prefix);
 }
