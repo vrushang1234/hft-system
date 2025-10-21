@@ -1,6 +1,12 @@
 #include "rb_tree.h"
-#define RED   1
-#define BLACK 0
+
+/*
+Function creates a new Red-Black Tree node
+
+Input: init_val, the string value to store in the new node
+
+Output: pointer to the newly created node, colored BLACK, with no children or parent
+*/
 
 rb_node *create_rb_tree(const char *init_val) {
     rb_node *node = malloc(sizeof(rb_node));
@@ -9,7 +15,14 @@ rb_node *create_rb_tree(const char *init_val) {
     node->right = node->left = node->parent = NULL;
     return node;
 }
+/*
+This function inserts a new node with the given value into a Red-Black Tree
 
+Input: root_ref, pointer to the root of the Red-Black Tree
+       value, the string value to insert
+
+Output: nothing to return, the new node is inserted and tree rebalanced in place
+*/
 void rb_tree_add_node(rb_node **root_ref, const char *value) {
     rb_node *parent = NULL, *temp = *root_ref;
     rb_node *newNode = malloc(sizeof(rb_node));
@@ -60,6 +73,15 @@ void rb_tree_add_node(rb_node **root_ref, const char *value) {
 (*root_ref)->color = BLACK;
 }
 
+/*
+This function searches for a node with a given value in a Red-Black Tree
+
+Input: root, the root of the Red-Black Tree
+       value, the string value to search for
+
+Output: pointer to the node containing the value, or NULL if not found
+*/
+
 rb_node *rb_search(rb_node *root, const char *value) {
     rb_node *temp = root;
     while (temp) {
@@ -70,6 +92,15 @@ rb_node *rb_search(rb_node *root, const char *value) {
     }
     return NULL;
 }
+
+/*
+This function deletes a node with a specific value from a Red-Black Tree
+
+Input: root_ref, pointer to the root of the Red-Black Tree
+       value, the string value of the node to delete
+
+Output: nothing to return, the node is removed and the tree rebalanced in place
+*/
 
 void rb_delete(rb_node **root_ref, const char *value) {
     rb_node *node = *root_ref;
@@ -178,7 +209,7 @@ void rb_delete(rb_node **root_ref, const char *value) {
     }
     if (x) x->color = BLACK;
 }
-
+// Performs left rotation on a node in Red-Black Tree
 void rb_left_rotate(rb_node **root, rb_node *x) {
     rb_node *y = x->right;
     if (!y) return; 
@@ -198,7 +229,7 @@ void rb_left_rotate(rb_node **root, rb_node *x) {
     x->parent = y;
 }
 
-
+// Performs right rotation on a node in Red-Black Tree
 void rb_right_rotate(rb_node **root, rb_node *y) {
     rb_node *x = y->left;
     if (!x) return;
@@ -218,7 +249,7 @@ void rb_right_rotate(rb_node **root, rb_node *y) {
     x->right = y;
     y->parent = x;
 }
-
+// This function finds the pointer to the node with the minimum value in a subtree of a Red-Black Tree
 rb_node *rb_minimum(rb_node *x) {
     while (x && x->left) x = x->left;
     return x;

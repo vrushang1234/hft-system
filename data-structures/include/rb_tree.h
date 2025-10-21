@@ -3,10 +3,13 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#define RED   1
+#define BLACK 0
+
 typedef struct rb_node
 {
-    struct rb_node left, right, parent;
-    char val;
+    struct rb_node *left, *right, *parent;
+    char *val;
     int color;
 } rb_node;
 

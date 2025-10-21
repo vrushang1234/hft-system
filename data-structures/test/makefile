@@ -1,13 +1,13 @@
 CC = gcc
 CFLAGS = -I$(IDIR) -Wall -Wextra -pedantic -Wunused -Wshadow -Werror=return-type -Wwrite-strings -g3
 
-IDIR = include
-ODIR = obj
-SDIR = src
+IDIR = ../include
+ODIR = ../obj
+SDIR = ../src
 
-TARGET = main.exe
+TARGET = test.exe
 
-SRCS = $(wildcard $(SDIR)/*.c)
+SRCS = $(wildcard $(SDIR)/*.c) $(wildcard ./*.c)
 OBJS = $(patsubst $(SDIR)/%.c, $(ODIR)/%.o, $(SRCS))
 
 .PHONY: all
@@ -17,11 +17,10 @@ $(TARGET): $(OBJS)
 	$(CC) -o $@ $^
 
 $(ODIR)/%.o: $(SDIR)/%.c
-	@mkdir -p $(ODIR)
+	@if not exist $(ODIR) mkdir $(ODIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
 clean:
-	-rm -f $(TARGET)
-	-rm -rf $(ODIR)
-
+	@if exist $(TARGET) del /Q $(TARGET)
+	@if exist $(ODIR) rmdir /S /Q $(ODIR)
