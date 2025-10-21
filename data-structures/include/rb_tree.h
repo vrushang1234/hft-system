@@ -1,12 +1,28 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
+#include <stdio.h>
+
+#define RED   1
+#define BLACK 0
+
 typedef struct rb_node
 {
-    struct rb_node *left;
-    struct rb_node *right;
+    struct rb_node *left, *right, *parent;
     char *val;
+    int color;
 } rb_node;
 
-rb_node *create_rb_tree();
+rb_node *create_rb_tree(const char *init_val);
 
-void radix_tree_add_node();
+void rb_tree_add_node(rb_node **root_ref, const char *value);
 
-void rb_search(rb_node *root, char *value);
+rb_node *rb_search(rb_node *root, const char *value);
+
+void rb_delete(rb_node **root_ref, const char *value);
+
+void rb_left_rotate(rb_node **root, rb_node *x);
+
+void rb_right_rotate(rb_node **root, rb_node *y);
+
+rb_node *rb_minimum(rb_node *x);
