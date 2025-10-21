@@ -17,10 +17,11 @@ $(TARGET): $(OBJS)
 	$(CC) -o $@ $^
 
 $(ODIR)/%.o: $(SDIR)/%.c
-	@if not exist $(ODIR) mkdir $(ODIR)
+	@mkdir -p $(ODIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
 clean:
-	@if exist $(TARGET) del /Q $(TARGET)
-	@if exist $(ODIR) rmdir /S /Q $(ODIR)
+	-rm -f $(TARGET)
+	-rm -rf $(ODIR)
+
