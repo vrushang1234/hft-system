@@ -1,0 +1,2 @@
+Icarus Verilog version 12.0 (devel) (s20150603-1539-g2693dd32b)
+gtkwave v3.3.100
