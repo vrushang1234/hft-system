@@ -1,7 +1,7 @@
 #include "radix_tree.h"
 #include "utils.h"
 
-radix_node *create_radix_tree(const char *init_val)
+radix_node *create_radix_tree( char *init_val)
 {
     radix_node *root = malloc(sizeof(radix_node));
 
@@ -22,7 +22,7 @@ Input: root, the root of the radix tree to add to
 
 Output: nothing to return, the new node is added in place
 */
-void radix_add(radix_node *root, const char *value)
+void radix_add(radix_node *root, char *value)
 {
     if (!value)
         return;
@@ -100,7 +100,7 @@ Input: root, the root of the radix tree to remove from
 
 Output: nothing to return
 */
-void radix_del(radix_node *root, const char *value)
+void radix_del(radix_node *root, char *value)
 {
     if (!value)
         return;
@@ -167,7 +167,7 @@ void radix_del_tree(radix_node *root)
     free(stack);
 }
 
-bool radix_search(radix_node *root, const char *value)
+bool radix_search(radix_node *root,  char *value)
 {
     if (!value)
         return false;

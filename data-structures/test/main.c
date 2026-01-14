@@ -48,6 +48,9 @@ const char *current_assertion = "";
 const char *current_file = "";
 int current_line = 0;
 
+#undef TEST
+#undef ASSERT
+
 #define TEST(name) \
     current_test = name; { \
         int test_failed = 0;
