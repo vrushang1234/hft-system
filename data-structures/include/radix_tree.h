@@ -13,14 +13,14 @@ typedef struct radix_node
     bool eow; // end of word
 } radix_node;
 
-radix_node *create_radix_tree(const char *init_val);
+radix_node *create_radix_tree( char *init_val);
 
-void radix_add(radix_node *root, const char *value);
+void radix_add(radix_node *root,  char *value);
 
-void radix_del(radix_node *root, const char *value);
+void radix_del(radix_node *root,  char *value);
 
 void radix_del_tree(radix_node *root);
 
-bool radix_search(radix_node *root, const char *value);
+bool radix_search(radix_node *root,  char *value);
 
 void radix_print_tree(radix_node *root);

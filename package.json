@@ -17,13 +17,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "format:ui": "cd ui && npm run format",
-    "format:rl": "cd rl-environment && npm run format"
+    "format:rl": "cd rl-environment && npm run format",
+    "format:all": "make format"
   },
   "devDependencies": {
     "@fastify/pre-commit": "^2.2.0"
   },
-  "pre-commit":[
-      "format:ui",
-      "format:rl"
+  "pre-commit": [
+    "format:all"
   ]
 }

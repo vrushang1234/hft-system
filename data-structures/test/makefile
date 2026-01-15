@@ -5,7 +5,7 @@ IDIR = ../include
 ODIR = ../obj
 SDIR = ../src
 
-TARGET = test.exe
+TARGET = test
 
 SRCS = $(wildcard $(SDIR)/*.c) $(wildcard ./*.c)
 OBJS = $(patsubst $(SDIR)/%.c, $(ODIR)/%.o, $(SRCS))
