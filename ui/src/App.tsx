@@ -3,6 +3,12 @@ import DataTable, { type Column } from "./components/DataTable";
 import { type TopRow, type BlotterRow } from "./types";
 import { topOfBookData } from "./data/mockTop";
 import { blotterData } from "./data/mockBlotter";
+import TelemetryChart from "./components/TelemetryChart";
+import {
+	telemetryEvents,
+	telemetrySeries,
+	telemetryWindows,
+} from "./data/mockTelemetry";
 
 export default function App() {
 	const [topRows] = useState<TopRow[]>(topOfBookData);
@@ -36,14 +42,103 @@ export default function App() {
 		[],
 	);
 
+	const [panels, setPanels] = useState({
+		topOfBook: true,
+		blotter: true,
+		telemetry: true,
+	});
+
+	const togglePanel = (key: "topOfBook" | "blotter" | "telemetry") => {
+		setPanels((prev) => {
+			const next = { ...prev, [key]: !prev[key] };
+			const enabled = Object.values(next).filter(Boolean).length;
+			return enabled === 0 ? prev : next;
+		});
+	};
+
+	const panelCount = Object.values(panels).filter(Boolean).length;
+
 	return (
 		<div className="shell">
-			<div className="workspace">
-				<div className="panel table" style={{ flex: "0 0 50%" }}>
-					<DataTable columns={topCols} rows={topRows} />
-				</div>
-				<div className="panel table" style={{ flex: 1, marginLeft: 12 }}>
-					<DataTable columns={blotterCols} rows={blotter} />
+			<aside className="rail">
+				<button
+					className={`rail-btn ${panels.telemetry ? "active" : ""}`}
+					aria-pressed={panels.telemetry}
+					aria-label="Telemetry"
+					onClick={() => togglePanel("telemetry")}
+				>
+					<i className="fa-thin fa-chart-area" aria-hidden="true" />
+				</button>
+				<button
+					className={`rail-btn ${panels.topOfBook ? "active" : ""}`}
+					aria-pressed={panels.topOfBook}
+					aria-label="Top of Book"
+					onClick={() => togglePanel("topOfBook")}
+				>
+					<i className="fa-thin fa-table" aria-hidden="true" />
+				</button>
+				<button
+					className={`rail-btn ${panels.blotter ? "active" : ""}`}
+					aria-pressed={panels.blotter}
+					aria-label="Execution Blotter"
+					onClick={() => togglePanel("blotter")}
+				>
+					<i className="fa-thin fa-wave-square" aria-hidden="true" />
+				</button>
+				<div className="rail-spacer" />
+				<button className="rail-btn" aria-label="Settings">
+					CFG
+				</button>
+			</aside>
+			<div className="main">
+				<header className="topbar">
+					<div className="title-block">
+						<div className="title">Realtime Market Monitor</div>
+						<div className="subtitle">Top of Book + Execution Blotter</div>
+					</div>
+					<div className="status-row">
+						<span className="status chip ok">NORMAL</span>
+						<span className="status chip warn">ANOMALY</span>
+						<span className="status chip sig-a">CH A</span>
+						<span className="status chip sig-b">CH B</span>
+					</div>
+				</header>
+				<div className={`workspace layout-${panelCount || 1}`}>
+					{panelCount === 1 && panels.telemetry ? (
+						<TelemetryChart
+							series={telemetrySeries}
+							events={telemetryEvents}
+							windows={telemetryWindows}
+							height={420}
+						/>
+					) : null}
+					{panelCount === 1 && panels.topOfBook ? (
+						<div className="panel table">
+							<DataTable columns={topCols} rows={topRows} />
+						</div>
+					) : null}
+					{panelCount === 1 && panels.blotter ? (
+						<div className="panel table">
+							<DataTable columns={blotterCols} rows={blotter} />
+						</div>
+					) : null}
+					{panelCount > 1 && panels.telemetry ? (
+						<TelemetryChart
+							series={telemetrySeries}
+							events={telemetryEvents}
+							windows={telemetryWindows}
+						/>
+					) : null}
+					{panelCount > 1 && panels.topOfBook ? (
+						<div className="panel table">
+							<DataTable columns={topCols} rows={topRows} />
+						</div>
+					) : null}
+					{panelCount > 1 && panels.blotter ? (
+						<div className="panel table">
+							<DataTable columns={blotterCols} rows={blotter} />
+						</div>
+					) : null}
 				</div>
 			</div>
 		</div>

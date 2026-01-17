@@ -21,3 +21,22 @@ export type TopRow = {
 	lastSz: number;
 	lastTime: string;
 };
+
+export type TelemetryPoint = {
+	t: number;
+	chA: number;
+	chB: number;
+	state?: "nominal" | "unstable" | "anomaly";
+};
+
+export type TelemetryEvent = {
+	t: number;
+	label: string;
+};
+
+export type TelemetryWindow = {
+	start: number;
+	end: number;
+	label: string;
+	kind: "unstable" | "anomaly" | "nominal";
+};
