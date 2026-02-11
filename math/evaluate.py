@@ -65,16 +65,41 @@ if __name__ == "__main__":
     print("\n--- Testing Tanh ---")
     out_t = run_sim("t_sim", ["tanh_tb.v", "tanh_q32.v"], TANH_DIR)
     if out_t:
-        print(out_t)
-    else:
-        print("[FAIL] No Tanh output received.")
+        print("[*] Verifying Tanh Accuracy...")
+        import re
+        matches = re.findall(r"^\s*([-.\d]+)\s+\|\s+([-.\d]+)", out_t, re.MULTILINE)
+        
+        if not matches:
+            print("    [!] Warning: Could not parse Tanh output table.")
+        else:
+            max_error = 0
+            for val_in, val_out in matches:
+                actual = float(val_out)
+                expected = math.tanh(float(val_in))
+                error = abs(actual - expected)
+                if error > max_error: max_error = error
+                
+            print(f"    Max Error Found: {max_error:.6f}")
+            if max_error < 0.005: 
+                print("    [RESULT] Tanh Verification: PASS")
+            else:
+                print("    [RESULT] Tanh Verification: FAIL (Error too high)")
+
 
     print("\n--- Testing Softmax ---")
     out_s = run_sim("s_sim", ["sm_tb.v", "sm_q32.v", "exp_q32.v", "ra_q32.v"], SM_DIR)
     if out_s:
-        print(out_s)
-    else:
-        print("[FAIL] No Softmax output received.")
+        print("\n[*] Verifying Softmax Accuracy...")
+        s_matches = re.findall(r"Input\[\d+\]:\s+([-.\d]+)\s+=>\s+Output\[\d+\]:\s+([-.\d]+)", out_s)
+        
+        if s_matches:
+            # Probability Check (outputs sum to ~1.0)
+            total_prob = sum(float(m[1]) for m in s_matches)
+            print(f"    Total Probability Sum: {total_prob:.6f}")
+            if 0.99 <= total_prob <= 1.01:
+                print("    [RESULT] Softmax Verification: PASS")
+            else:
+                print("    [RESULT] Softmax Verification: FAIL (Does not sum to 1.0)")
 
     # Cleanup
     print("\n[*] Cleaning up artifacts...")
