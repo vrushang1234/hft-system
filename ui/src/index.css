@@ -173,6 +173,11 @@ body {
 	grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
+.workspace.layout-4 {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
 .panel {
 	background: var(--panel);
 	border: 1px solid var(--line);

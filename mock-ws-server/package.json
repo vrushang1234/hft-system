@@ -1,0 +1,12 @@
+{
+	"name": "hft-mock-ws-server",
+	"version": "0.1.0",
+	"private": true,
+	"type": "commonjs",
+	"scripts": {
+		"start": "node server.js"
+	},
+	"dependencies": {
+		"ws": "^8.18.0"
+	}
+}
