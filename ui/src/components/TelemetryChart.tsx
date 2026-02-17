@@ -1,82 +1,182 @@
-import { useId, useMemo } from "react";
-import type { TelemetryEvent, TelemetryPoint, TelemetryWindow } from "../types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { TelemetryPoint } from "../types";
 
 type Props = {
 	series: TelemetryPoint[];
-	events?: TelemetryEvent[];
-	windows?: TelemetryWindow[];
 	height?: number;
 	units?: string;
 	title?: string;
 };
 
-const WIDTH = 820;
-const HEIGHT = 320;
+const DEFAULT_HEIGHT = 320;
 const PADDING = { top: 26, right: 28, bottom: 26, left: 48 };
+const MAX_POINTS = 900;
 
 export default function TelemetryChart({
 	series,
-	events = [],
-	windows = [],
 	height,
 	units = "us",
 	title = "Latency + Flow Telemetry",
 }: Props) {
-	const clipId = useId();
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const frameRef = useRef<number | null>(null);
+	const latestRef = useRef({ series, units });
+	const [size, setSize] = useState({ width: 820, height: height ?? DEFAULT_HEIGHT });
+
+	useEffect(() => {
+		latestRef.current = { series, units };
+		if (frameRef.current != null) {
+			return;
+		}
+		frameRef.current = window.requestAnimationFrame(() => {
+			frameRef.current = null;
+			drawChart();
+		});
+	}, [series, units]);
+
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el) {
+			return;
+		}
+		const observer = new ResizeObserver((entries) => {
+			for (const entry of entries) {
+				const nextWidth = Math.max(320, entry.contentRect.width);
+				setSize({ width: nextWidth, height: height ?? DEFAULT_HEIGHT });
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [height]);
 
 	const domain = useMemo(() => {
 		if (series.length === 0) {
-			return {
-				tMin: 0,
-				tMax: 1,
-				yMin: 0,
-				yMax: 1,
-			};
+			return { tMin: 0, tMax: 1, yMin: 0, yMax: 1 };
 		}
-
 		let tMin = series[0].t;
 		let tMax = series[0].t;
 		let yMin = Math.min(series[0].chA, series[0].chB);
 		let yMax = Math.max(series[0].chA, series[0].chB);
-
 		for (const point of series) {
 			tMin = Math.min(tMin, point.t);
 			tMax = Math.max(tMax, point.t);
 			yMin = Math.min(yMin, point.chA, point.chB);
 			yMax = Math.max(yMax, point.chA, point.chB);
 		}
-
 		const padding = (yMax - yMin) * 0.08 || 1;
 		return { tMin, tMax, yMin: yMin - padding, yMax: yMax + padding };
 	}, [series]);
 
-	const chartHeight = height ?? HEIGHT;
-	const plotWidth = WIDTH - PADDING.left - PADDING.right;
-	const plotHeight = chartHeight - PADDING.top - PADDING.bottom;
+	const drawChart = () => {
+		const canvas = canvasRef.current;
+		if (!canvas) {
+			return;
+		}
+		const ctx = canvas.getContext("2d");
+		if (!ctx) {
+			return;
+		}
 
-	const scaleX = (t: number) =>
-		PADDING.left + ((t - domain.tMin) / (domain.tMax - domain.tMin || 1)) * plotWidth;
-	const scaleY = (v: number) =>
-		PADDING.top + (1 - (v - domain.yMin) / (domain.yMax - domain.yMin || 1)) * plotHeight;
+		const { width, height: chartHeight } = size;
+		const dpr = window.devicePixelRatio || 1;
+		canvas.width = Math.floor(width * dpr);
+		canvas.height = Math.floor(chartHeight * dpr);
+		canvas.style.width = `${width}px`;
+		canvas.style.height = `${chartHeight}px`;
+		ctx.scale(dpr, dpr);
+		ctx.clearRect(0, 0, width, chartHeight);
 
-	const linePath = (key: "chA" | "chB") =>
-		series
-			.map((point, index) => {
-				const command = index === 0 ? "M" : "L";
-				return `${command} ${scaleX(point.t)} ${scaleY(point[key])}`;
-			})
-			.join(" ");
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, width, chartHeight);
 
-	const yTicks = 6;
-	const xTicks = 7;
+		const plotWidth = width - PADDING.left - PADDING.right;
+		const plotHeight = chartHeight - PADDING.top - PADDING.bottom;
+		const scaleX = (t: number) =>
+			PADDING.left + ((t - domain.tMin) / (domain.tMax - domain.tMin || 1)) * plotWidth;
+		const scaleY = (v: number) =>
+			PADDING.top + (1 - (v - domain.yMin) / (domain.yMax - domain.yMin || 1)) * plotHeight;
 
-	const yTickValues = Array.from({ length: yTicks }, (_, i) => {
-		return domain.yMin + (i / (yTicks - 1)) * (domain.yMax - domain.yMin || 1);
-	});
+		ctx.strokeStyle = "#e6eaf0";
+		ctx.lineWidth = 1;
+		const yTicks = 6;
+		const xTicks = 7;
+		for (let i = 0; i < yTicks; i += 1) {
+			const value = domain.yMin + (i / (yTicks - 1)) * (domain.yMax - domain.yMin || 1);
+			const y = scaleY(value);
+			ctx.beginPath();
+			ctx.moveTo(PADDING.left, y);
+			ctx.lineTo(width - PADDING.right, y);
+			ctx.stroke();
+		}
+		for (let i = 0; i < xTicks; i += 1) {
+			const value = domain.tMin + (i / (xTicks - 1)) * (domain.tMax - domain.tMin || 1);
+			const x = scaleX(value);
+			ctx.beginPath();
+			ctx.moveTo(x, PADDING.top);
+			ctx.lineTo(x, chartHeight - PADDING.bottom);
+			ctx.stroke();
+		}
 
-	const xTickValues = Array.from({ length: xTicks }, (_, i) => {
-		return domain.tMin + (i / (xTicks - 1)) * (domain.tMax - domain.tMin || 1);
-	});
+		const points = latestRef.current.series;
+		const stride = points.length > MAX_POINTS ? Math.ceil(points.length / MAX_POINTS) : 1;
+		const drawLine = (key: "chA" | "chB", color: string) => {
+			ctx.strokeStyle = color;
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			let started = false;
+			for (let i = 0; i < points.length; i += stride) {
+				const point = points[i];
+				const x = scaleX(point.t);
+				const y = scaleY(point[key]);
+				if (!started) {
+					ctx.moveTo(x, y);
+					started = true;
+				} else {
+					ctx.lineTo(x, y);
+				}
+			}
+			ctx.stroke();
+		};
+
+		drawLine("chA", "#1d4ed8");
+		drawLine("chB", "#6d28d9");
+
+		ctx.fillStyle = "#4b5563";
+		ctx.font = "10px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+		ctx.textAlign = "right";
+		ctx.textBaseline = "middle";
+		for (let i = 0; i < yTicks; i += 1) {
+			const value = domain.yMin + (i / (yTicks - 1)) * (domain.yMax - domain.yMin || 1);
+			const y = scaleY(value);
+			ctx.fillText(value.toFixed(1), PADDING.left - 8, y);
+		}
+		ctx.textAlign = "center";
+		ctx.textBaseline = "top";
+		for (let i = 0; i < xTicks; i += 1) {
+			const value = domain.tMin + (i / (xTicks - 1)) * (domain.tMax - domain.tMin || 1);
+			const x = scaleX(value);
+			ctx.fillText(value.toFixed(0), x, chartHeight - PADDING.bottom + 6);
+		}
+
+		ctx.fillStyle = "#6b7280";
+		ctx.textAlign = "left";
+		ctx.textBaseline = "bottom";
+		ctx.fillText(`Latency (${latestRef.current.units})`, PADDING.left, PADDING.top - 6);
+		ctx.textAlign = "right";
+		ctx.textBaseline = "bottom";
+		ctx.fillText("Time (s)", width - PADDING.right, chartHeight - 6);
+	};
+
+	useEffect(() => {
+		drawChart();
+		return () => {
+			if (frameRef.current != null) {
+				window.cancelAnimationFrame(frameRef.current);
+				frameRef.current = null;
+			}
+		};
+	}, [domain, size]);
 
 	return (
 		<div className="panel telemetry-panel">
@@ -96,124 +196,8 @@ export default function TelemetryChart({
 					</span>
 				</div>
 			</div>
-			<div className="telemetry-body">
-				<svg
-					className="telemetry-svg"
-					viewBox={`0 0 ${WIDTH} ${chartHeight}`}
-					role="img"
-					aria-label="Telemetry chart"
-				>
-					<rect
-						className="telemetry-plot"
-						x={PADDING.left}
-						y={PADDING.top}
-						width={plotWidth}
-						height={plotHeight}
-					/>
-					{windows.map((window) => {
-						const xStart = scaleX(window.start);
-						const xEnd = scaleX(window.end);
-						return (
-							<rect
-								key={`${window.label}-${window.start}`}
-								x={xStart}
-								y={PADDING.top}
-								width={Math.max(1, xEnd - xStart)}
-								height={plotHeight}
-								className={`telemetry-window window-${window.kind}`}
-							/>
-						);
-					})}
-					{yTickValues.map((value) => (
-						<line
-							key={`y-grid-${value}`}
-							x1={PADDING.left}
-							y1={scaleY(value)}
-							x2={WIDTH - PADDING.right}
-							y2={scaleY(value)}
-							className="telemetry-grid"
-						/>
-					))}
-					{xTickValues.map((value) => (
-						<line
-							key={`x-grid-${value}`}
-							x1={scaleX(value)}
-							y1={PADDING.top}
-							x2={scaleX(value)}
-							y2={chartHeight - PADDING.bottom}
-							className="telemetry-grid"
-						/>
-					))}
-					<g clipPath={`url(#${clipId})`}>
-						<path d={linePath("chA")} className="telemetry-line ch-a" />
-						<path d={linePath("chB")} className="telemetry-line ch-b" />
-					</g>
-					{events.map((event) => (
-						<g key={`${event.label}-${event.t}`}>
-							<line
-								x1={scaleX(event.t)}
-								y1={PADDING.top}
-								x2={scaleX(event.t)}
-								y2={chartHeight - PADDING.bottom}
-								className="telemetry-event-line"
-							/>
-							<text
-								x={scaleX(event.t) + 4}
-								y={PADDING.top + 10}
-								className="telemetry-event-label"
-							>
-								{event.label}
-							</text>
-						</g>
-					))}
-					{yTickValues.map((value) => (
-						<text
-							key={`y-label-${value}`}
-							x={PADDING.left - 8}
-							y={scaleY(value) + 3}
-							className="telemetry-axis"
-							textAnchor="end"
-						>
-							{value.toFixed(1)}
-						</text>
-					))}
-					{xTickValues.map((value) => (
-						<text
-							key={`x-label-${value}`}
-							x={scaleX(value)}
-							y={chartHeight - PADDING.bottom + 16}
-							className="telemetry-axis"
-							textAnchor="middle"
-						>
-							{value.toFixed(0)}
-						</text>
-					))}
-					<text
-						x={PADDING.left}
-						y={PADDING.top - 8}
-						className="telemetry-axis telemetry-axis-title"
-					>
-						{`Latency (${units})`}
-					</text>
-					<text
-						x={WIDTH - PADDING.right}
-						y={chartHeight - 6}
-						className="telemetry-axis telemetry-axis-title"
-						textAnchor="end"
-					>
-						Time (s)
-					</text>
-					<defs>
-						<clipPath id={clipId}>
-							<rect
-								x={PADDING.left}
-								y={PADDING.top}
-								width={plotWidth}
-								height={plotHeight}
-							/>
-						</clipPath>
-					</defs>
-				</svg>
+			<div className="telemetry-body" ref={containerRef}>
+				<canvas className="telemetry-canvas" ref={canvasRef} />
 			</div>
 		</div>
 	);

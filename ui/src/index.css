@@ -261,6 +261,13 @@ body {
 	background: #ffffff;
 }
 
+.telemetry-canvas {
+	width: 100%;
+	height: 100%;
+	display: block;
+	background: #ffffff;
+}
+
 .telemetry-plot {
 	fill: #ffffff;
 }
@@ -335,6 +342,21 @@ body {
 	flex: 1;
 	overflow: auto;
 	padding: 0;
+	position: relative;
+}
+
+.tbl-spacer {
+	position: relative;
+	width: 100%;
+	min-height: 100%;
+}
+
+.tbl-window {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	will-change: transform;
 }
 
 .cell {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import DataTable, { type Column } from "./components/DataTable";
 import {
 	type ActiveOrderRow,
@@ -45,6 +45,87 @@ function formatLatency(value: number | null) {
 	}
 	return `${micros.toFixed(1)} us`;
 }
+
+type TopBarProps = {
+	connection: string;
+	inventory: ReturnType<typeof useHftStream>["inventory"];
+	systemHealth: ReturnType<typeof useHftStream>["systemHealth"];
+	lastMessageAt: number | null;
+	lastLatency: ReturnType<typeof useHftStream>["lastLatency"];
+};
+
+const TopBar = memo(function TopBar({
+	connection,
+	inventory,
+	systemHealth,
+	lastMessageAt,
+	lastLatency,
+}: TopBarProps) {
+	return (
+		<header className="topbar">
+			<div className="title-block">
+				<div className="title">Realtime Market Monitor</div>
+				<div className="subtitle">Top of Book + Orders + Tape</div>
+			</div>
+			<div className="status-row">
+				<span className={`status chip ${connection === "open" ? "ok" : "warn"}`}>
+					WS {connection.toUpperCase()}
+				</span>
+				<span className="status chip">
+					POS {inventory ? `${inventory.position} ${inventory.inventory_skew}` : "--"}
+				</span>
+				<span className="status chip">
+					PNL {inventory ? formatNumber(inventory.realized_pnl + inventory.unrealized_pnl, 2) : "--"}
+				</span>
+				<span className="status chip">
+					EVT {systemHealth ? `${systemHealth.event_rate}/s` : "--"}
+				</span>
+				<span className="status chip">
+					DROP {systemHealth ? systemHealth.dropped_events : "--"}
+				</span>
+				<span className="status chip">
+					LAT {formatLatency(lastLatency?.chA ?? null)}
+				</span>
+				<span className="status chip">
+					LAST {lastMessageAt ? new Date(lastMessageAt).toLocaleTimeString() : "--"}
+				</span>
+			</div>
+		</header>
+	);
+} as any);
+
+type TablePanelProps<T> = {
+	rows: T[];
+	columns: Column<T>[];
+};
+
+const TablePanel = memo(function TablePanel<T extends { id: string | number }>({
+	rows,
+	columns,
+}: TablePanelProps<T>) {
+	return (
+		<div className="panel table">
+			<DataTable columns={columns} rows={rows} />
+		</div>
+	);
+} as any);
+
+const TelemetryPanel = memo(function TelemetryPanel({
+	series,
+	height,
+}: {
+	series: ReturnType<typeof useHftStream>["latencySeries"];
+	height?: number;
+}) {
+	return (
+		<TelemetryChart
+			series={series}
+			height={height}
+			units="ns"
+			title="Latency Race Diagnostics"
+		/>
+	);
+} as any);
 
 export default function App() {
 	const {
@@ -214,82 +295,37 @@ export default function App() {
 				</button>
 			</aside>
 			<div className="main">
-				<header className="topbar">
-					<div className="title-block">
-						<div className="title">Realtime Market Monitor</div>
-						<div className="subtitle">Top of Book + Orders + Tape</div>
-					</div>
-					<div className="status-row">
-						<span
-							className={`status chip ${connection === "open" ? "ok" : "warn"}`}
-						>
-							WS {connection.toUpperCase()}
-						</span>
-						<span className="status chip">
-							POS {inventory ? `${inventory.position} ${inventory.inventory_skew}` : "--"}
-						</span>
-						<span className="status chip">
-							PNL {inventory ? formatNumber(inventory.realized_pnl + inventory.unrealized_pnl, 2) : "--"}
-						</span>
-						<span className="status chip">
-							EVT {systemHealth ? `${systemHealth.event_rate}/s` : "--"}
-						</span>
-						<span className="status chip">
-							DROP {systemHealth ? systemHealth.dropped_events : "--"}
-						</span>
-						<span className="status chip">
-							LAT {formatLatency(lastLatency?.chA ?? null)}
-						</span>
-						<span className="status chip">
-							LAST {lastMessageAt ? new Date(lastMessageAt).toLocaleTimeString() : "--"}
-						</span>
-					</div>
-				</header>
+				<TopBar
+					connection={connection}
+					inventory={inventory}
+					systemHealth={systemHealth}
+					lastMessageAt={lastMessageAt}
+					lastLatency={lastLatency}
+				/>
 				<div className={`workspace layout-${panelCount || 1}`}>
 					{panelCount === 1 && panels.telemetry ? (
-						<TelemetryChart
-							series={latencySeries}
-							height={420}
-							units="ns"
-							title="Latency Race Diagnostics"
-						/>
+						<TelemetryPanel series={latencySeries} height={420} />
 					) : null}
 					{panelCount === 1 && panels.topOfBook ? (
-						<div className="panel table">
-							<DataTable columns={topCols} rows={topRows} />
-						</div>
+						<TablePanel columns={topCols} rows={topRows} />
 					) : null}
 					{panelCount === 1 && panels.activeOrders ? (
-						<div className="panel table">
-							<DataTable columns={activeOrderCols} rows={activeOrderRows} />
-						</div>
+						<TablePanel columns={activeOrderCols} rows={activeOrderRows} />
 					) : null}
 					{panelCount === 1 && panels.tradeTape ? (
-						<div className="panel table">
-							<DataTable columns={tradeTapeCols} rows={tradeTapeRows} />
-						</div>
+						<TablePanel columns={tradeTapeCols} rows={tradeTapeRows} />
 					) : null}
 					{panelCount > 1 && panels.telemetry ? (
-						<TelemetryChart
-							series={latencySeries}
-							units="ns"
-							title="Latency Race Diagnostics"
-						/>
+						<TelemetryPanel series={latencySeries} />
 					) : null}
 					{panelCount > 1 && panels.topOfBook ? (
-						<div className="panel table">
-							<DataTable columns={topCols} rows={topRows} />
-						</div>
+						<TablePanel columns={topCols} rows={topRows} />
 					) : null}
 					{panelCount > 1 && panels.activeOrders ? (
-						<div className="panel table">
-							<DataTable columns={activeOrderCols} rows={activeOrderRows} />
-						</div>
+						<TablePanel columns={activeOrderCols} rows={activeOrderRows} />
 					) : null}
 					{panelCount > 1 && panels.tradeTape ? (
-						<div className="panel table">
-							<DataTable columns={tradeTapeCols} rows={tradeTapeRows} />
-						</div>
+						<TablePanel columns={tradeTapeCols} rows={tradeTapeRows} />
 					) : null}
 				</div>
 			</div>

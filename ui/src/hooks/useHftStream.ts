@@ -16,29 +16,31 @@ const DEFAULT_UI_TICK_MS = 100;
 const DEFAULT_MOCK_TICK_MS = 80;
 const MAX_TRADE_TAPE = 200;
 const MAX_LATENCY_POINTS = 240;
+const MAX_BUFFERED_MESSAGES = 5000;
+const MAX_BATCH_PROCESS = 1200;
 
 type ConnectionStatus = "connecting" | "open" | "closed" | "error";
 
 type StreamState = {
 	orderBooks: Record<string, OrderBookSnapshot>;
 	activeOrders: ActiveOrder[];
-	tradeTape: TradeTape[];
-	latencySeries: TelemetryPoint[];
 	inventory: InventoryPnl | null;
 	systemHealth: SystemHealth | null;
 	connection: ConnectionStatus;
 	lastMessageAt: number | null;
+	tradeTapeVersion: number;
+	latencyVersion: number;
 };
 
 const initialState: StreamState = {
 	orderBooks: {},
 	activeOrders: [],
-	tradeTape: [],
-	latencySeries: [],
 	inventory: null,
 	systemHealth: null,
 	connection: "connecting",
 	lastMessageAt: null,
+	tradeTapeVersion: 0,
+	latencyVersion: 0,
 };
 
 type Options = {
@@ -67,17 +69,60 @@ function toTelemetryPoint(sample: LatencyRace, t: number): TelemetryPoint {
 	};
 }
 
+type RingBuffer<T> = {
+	data: T[];
+	start: number;
+	size: number;
+	capacity: number;
+};
+
+function createRingBuffer<T>(capacity: number): RingBuffer<T> {
+	return { data: new Array<T>(capacity), start: 0, size: 0, capacity };
+}
+
+function ringPush<T>(buffer: RingBuffer<T>, value: T) {
+	const index = (buffer.start + buffer.size) % buffer.capacity;
+	buffer.data[index] = value;
+	if (buffer.size < buffer.capacity) {
+		buffer.size += 1;
+	} else {
+		buffer.start = (buffer.start + 1) % buffer.capacity;
+	}
+}
+
+function ringToArrayChrono<T>(buffer: RingBuffer<T>): T[] {
+	const result = new Array<T>(buffer.size);
+	for (let i = 0; i < buffer.size; i += 1) {
+		const index = (buffer.start + i) % buffer.capacity;
+		result[i] = buffer.data[index];
+	}
+	return result;
+}
+
+function ringToArrayNewestFirst<T>(buffer: RingBuffer<T>): T[] {
+	const result = new Array<T>(buffer.size);
+	for (let i = 0; i < buffer.size; i += 1) {
+		const index =
+			(buffer.start + buffer.size - 1 - i + buffer.capacity) % buffer.capacity;
+		result[i] = buffer.data[index];
+	}
+	return result;
+}
+
 function applyMessages(
 	prev: StreamState,
 	batch: HftMessage[],
 	startTs: number,
+	tradeTapeBuffer: RingBuffer<TradeTape>,
+	latencyBuffer: RingBuffer<TelemetryPoint>,
 ): StreamState {
 	let nextOrderBooks = prev.orderBooks;
 	let nextActiveOrders = prev.activeOrders;
-	let nextTradeTape = prev.tradeTape;
-	let nextLatency = prev.latencySeries;
 	let nextInventory = prev.inventory;
 	let nextSystemHealth = prev.systemHealth;
+	let tradeTapeVersion = prev.tradeTapeVersion;
+	let latencyVersion = prev.latencyVersion;
+	let touched = false;
 
 	for (const message of batch) {
 		switch (message.type) {
@@ -86,38 +131,34 @@ function applyMessages(
 					nextOrderBooks = { ...prev.orderBooks };
 				}
 				nextOrderBooks[message.data.symbol] = message.data;
+				touched = true;
 				break;
 			}
 			case "active_orders": {
 				nextActiveOrders = message.data.slice();
+				touched = true;
 				break;
 			}
 			case "trade_tape": {
-				if (nextTradeTape === prev.tradeTape) {
-					nextTradeTape = prev.tradeTape.slice();
-				}
-				nextTradeTape.unshift(message.data);
-				if (nextTradeTape.length > MAX_TRADE_TAPE) {
-					nextTradeTape.length = MAX_TRADE_TAPE;
-				}
+				ringPush(tradeTapeBuffer, message.data);
+				tradeTapeVersion += 1;
+				touched = true;
 				break;
 			}
 			case "latency_race": {
-				if (nextLatency === prev.latencySeries) {
-					nextLatency = prev.latencySeries.slice();
-				}
-				nextLatency.push(toTelemetryPoint(message.data, nowSeconds(startTs)));
-				if (nextLatency.length > MAX_LATENCY_POINTS) {
-					nextLatency.splice(0, nextLatency.length - MAX_LATENCY_POINTS);
-				}
+				ringPush(latencyBuffer, toTelemetryPoint(message.data, nowSeconds(startTs)));
+				latencyVersion += 1;
+				touched = true;
 				break;
 			}
 			case "inventory_pnl": {
 				nextInventory = message.data;
+				touched = true;
 				break;
 			}
 			case "system_health": {
 				nextSystemHealth = message.data;
+				touched = true;
 				break;
 			}
 			default:
@@ -125,15 +166,19 @@ function applyMessages(
 		}
 	}
 
+	if (!touched) {
+		return prev;
+	}
+
 	return {
 		...prev,
 		orderBooks: nextOrderBooks,
 		activeOrders: nextActiveOrders,
-		tradeTape: nextTradeTape,
-		latencySeries: nextLatency,
 		inventory: nextInventory,
 		systemHealth: nextSystemHealth,
 		lastMessageAt: Date.now(),
+		tradeTapeVersion,
+		latencyVersion,
 	};
 }
 
@@ -149,6 +194,12 @@ export function useHftStream(options: Options = {}) {
 	const replayRef = useRef<number | null>(null);
 	const replayIndexRef = useRef(0);
 	const replayDataRef = useRef<HftMessage[]>([]);
+	const tradeTapeRef = useRef<RingBuffer<TradeTape>>(
+		createRingBuffer<TradeTape>(MAX_TRADE_TAPE),
+	);
+	const latencyRef = useRef<RingBuffer<TelemetryPoint>>(
+		createRingBuffer<TelemetryPoint>(MAX_LATENCY_POINTS),
+	);
 	const startRef = useRef<number>(Date.now());
 
 	useEffect(() => {
@@ -156,6 +207,8 @@ export function useHftStream(options: Options = {}) {
 		bufferRef.current = [];
 		replayIndexRef.current = 0;
 		replayDataRef.current = [];
+		tradeTapeRef.current = createRingBuffer<TradeTape>(MAX_TRADE_TAPE);
+		latencyRef.current = createRingBuffer<TelemetryPoint>(MAX_LATENCY_POINTS);
 		setState((prev) => ({ ...prev, connection: "connecting" }));
 		let active = true;
 
@@ -184,7 +237,11 @@ export function useHftStream(options: Options = {}) {
 				try {
 					const parsed = JSON.parse(event.data) as HftMessage;
 					if (parsed && typeof parsed === "object" && "type" in parsed) {
-						bufferRef.current.push(parsed);
+						const buffer = bufferRef.current;
+						buffer.push(parsed);
+						if (buffer.length > MAX_BUFFERED_MESSAGES) {
+							buffer.splice(0, buffer.length - MAX_BUFFERED_MESSAGES);
+						}
 					}
 				} catch {
 					return;
@@ -211,7 +268,11 @@ export function useHftStream(options: Options = {}) {
 						const next = stream[replayIndexRef.current];
 						replayIndexRef.current =
 							(replayIndexRef.current + 1) % stream.length;
-						bufferRef.current.push(next);
+						const buffer = bufferRef.current;
+						buffer.push(next);
+						if (buffer.length > MAX_BUFFERED_MESSAGES) {
+							buffer.splice(0, buffer.length - MAX_BUFFERED_MESSAGES);
+						}
 					}, DEFAULT_MOCK_TICK_MS);
 				})
 				.catch(() => {
@@ -237,21 +298,35 @@ export function useHftStream(options: Options = {}) {
 
 	useEffect(() => {
 		const handle = window.setInterval(() => {
-			if (bufferRef.current.length === 0) {
+			const buffer = bufferRef.current;
+			if (buffer.length === 0) {
 				return;
 			}
-			const batch = bufferRef.current.splice(0, bufferRef.current.length);
-			setState((prev) => applyMessages(prev, batch, startRef.current));
+			if (buffer.length > MAX_BATCH_PROCESS) {
+				buffer.splice(0, buffer.length - MAX_BATCH_PROCESS);
+			}
+			const batch = buffer.splice(0, buffer.length);
+			setState((prev) =>
+				applyMessages(
+					prev,
+					batch,
+					startRef.current,
+					tradeTapeRef.current,
+					latencyRef.current,
+				),
+			);
 		}, uiTickMs);
 		return () => window.clearInterval(handle);
 	}, [uiTickMs]);
 
 	const derived = useMemo(() => {
 		const orderBookList = Object.values(state.orderBooks);
-		const lastTrade = state.tradeTape[0];
-		const lastLatency = state.latencySeries[state.latencySeries.length - 1] ?? null;
-		return { orderBookList, lastTrade, lastLatency };
-	}, [state.orderBooks, state.tradeTape, state.latencySeries]);
+		const tradeTape = ringToArrayNewestFirst(tradeTapeRef.current);
+		const latencySeries = ringToArrayChrono(latencyRef.current);
+		const lastTrade = tradeTape[0];
+		const lastLatency = latencySeries[latencySeries.length - 1] ?? null;
+		return { orderBookList, tradeTape, latencySeries, lastTrade, lastLatency };
+	}, [state.orderBooks, state.tradeTapeVersion, state.latencyVersion]);
 
 	return {
 		...state,
