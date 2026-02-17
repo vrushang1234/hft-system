@@ -35,6 +35,17 @@ function formatSpreadBp(value: number | null) {
 	return value.toFixed(1);
 }
 
+function formatLatency(value: number | null) {
+	if (value == null || Number.isNaN(value)) {
+		return "--";
+	}
+	const micros = value / 1000;
+	if (micros >= 1000) {
+		return `${(micros / 1000).toFixed(2)} ms`;
+	}
+	return `${micros.toFixed(1)} us`;
+}
+
 export default function App() {
 	const {
 		orderBookList,
@@ -46,7 +57,8 @@ export default function App() {
 		connection,
 		lastMessageAt,
 		lastTrade,
-	} = useHftStream();
+		lastLatency,
+	} = useHftStream({ source: "ws" });
 
 	const topRows = useMemo<TopOfBookRow[]>(() => {
 		return orderBookList.map((snapshot) => {
@@ -224,6 +236,9 @@ export default function App() {
 						</span>
 						<span className="status chip">
 							DROP {systemHealth ? systemHealth.dropped_events : "--"}
+						</span>
+						<span className="status chip">
+							LAT {formatLatency(lastLatency?.chA ?? null)}
 						</span>
 						<span className="status chip">
 							LAST {lastMessageAt ? new Date(lastMessageAt).toLocaleTimeString() : "--"}

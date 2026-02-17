@@ -11,7 +11,9 @@ import type {
 } from "../types";
 
 const DEFAULT_WS_URL = "ws://localhost:8080/ws";
+const DEFAULT_MOCK_URL = "/hft_stream.json";
 const DEFAULT_UI_TICK_MS = 100;
+const DEFAULT_MOCK_TICK_MS = 80;
 const MAX_TRADE_TAPE = 200;
 const MAX_LATENCY_POINTS = 240;
 
@@ -41,7 +43,9 @@ const initialState: StreamState = {
 
 type Options = {
 	url?: string;
+	mockUrl?: string;
 	uiTickMs?: number;
+	source?: "ws" | "mock";
 };
 
 function nowSeconds(start: number) {
@@ -135,46 +139,101 @@ function applyMessages(
 
 export function useHftStream(options: Options = {}) {
 	const url = options.url ?? import.meta.env.VITE_HFT_WS_URL ?? DEFAULT_WS_URL;
+	const mockUrl =
+		options.mockUrl ?? import.meta.env.VITE_HFT_MOCK_URL ?? DEFAULT_MOCK_URL;
 	const uiTickMs = options.uiTickMs ?? DEFAULT_UI_TICK_MS;
+	const source = options.source ?? (options.url ? "ws" : "mock");
 	const [state, setState] = useState<StreamState>(initialState);
 	const bufferRef = useRef<HftMessage[]>([]);
 	const socketRef = useRef<WebSocket | null>(null);
+	const replayRef = useRef<number | null>(null);
+	const replayIndexRef = useRef(0);
+	const replayDataRef = useRef<HftMessage[]>([]);
 	const startRef = useRef<number>(Date.now());
 
 	useEffect(() => {
 		startRef.current = Date.now();
-		const socket = new WebSocket(url);
-		socketRef.current = socket;
+		bufferRef.current = [];
+		replayIndexRef.current = 0;
+		replayDataRef.current = [];
 		setState((prev) => ({ ...prev, connection: "connecting" }));
+		let active = true;
 
-		socket.onopen = () => {
-			setState((prev) => ({ ...prev, connection: "open" }));
-		};
+		if (replayRef.current) {
+			window.clearInterval(replayRef.current);
+			replayRef.current = null;
+		}
 
-		socket.onclose = () => {
-			setState((prev) => ({ ...prev, connection: "closed" }));
-		};
+		if (source === "ws") {
+			const socket = new WebSocket(url);
+			socketRef.current = socket;
 
-		socket.onerror = () => {
-			setState((prev) => ({ ...prev, connection: "error" }));
-		};
+			socket.onopen = () => {
+				setState((prev) => ({ ...prev, connection: "open" }));
+			};
 
-		socket.onmessage = (event) => {
-			try {
-				const parsed = JSON.parse(event.data) as HftMessage;
-				if (parsed && typeof parsed === "object" && "type" in parsed) {
-					bufferRef.current.push(parsed);
+			socket.onclose = () => {
+				setState((prev) => ({ ...prev, connection: "closed" }));
+			};
+
+			socket.onerror = () => {
+				setState((prev) => ({ ...prev, connection: "error" }));
+			};
+
+			socket.onmessage = (event) => {
+				try {
+					const parsed = JSON.parse(event.data) as HftMessage;
+					if (parsed && typeof parsed === "object" && "type" in parsed) {
+						bufferRef.current.push(parsed);
+					}
+				} catch {
+					return;
 				}
-			} catch {
-				return;
-			}
-		};
+			};
+		} else {
+			socketRef.current = null;
+			fetch(mockUrl)
+				.then((response) => response.json())
+				.then((payload) => {
+					if (!active) {
+						return;
+					}
+					if (!Array.isArray(payload)) {
+						throw new Error("Invalid mock payload");
+					}
+					replayDataRef.current = payload as HftMessage[];
+					setState((prev) => ({ ...prev, connection: "open" }));
+					replayRef.current = window.setInterval(() => {
+						const stream = replayDataRef.current;
+						if (stream.length === 0) {
+							return;
+						}
+						const next = stream[replayIndexRef.current];
+						replayIndexRef.current =
+							(replayIndexRef.current + 1) % stream.length;
+						bufferRef.current.push(next);
+					}, DEFAULT_MOCK_TICK_MS);
+				})
+				.catch(() => {
+					if (!active) {
+						return;
+					}
+					setState((prev) => ({ ...prev, connection: "error" }));
+				});
+		}
 
 		return () => {
+			active = false;
+			if (socketRef.current) {
+				socketRef.current.close();
+			}
 			socketRef.current = null;
-			socket.close();
+			if (replayRef.current) {
+				window.clearInterval(replayRef.current);
+				replayRef.current = null;
+			}
 		};
-	}, [url]);
+	}, [mockUrl, source, url]);
 
 	useEffect(() => {
 		const handle = window.setInterval(() => {
@@ -190,8 +249,9 @@ export function useHftStream(options: Options = {}) {
 	const derived = useMemo(() => {
 		const orderBookList = Object.values(state.orderBooks);
 		const lastTrade = state.tradeTape[0];
-		return { orderBookList, lastTrade };
-	}, [state.orderBooks, state.tradeTape]);
+		const lastLatency = state.latencySeries[state.latencySeries.length - 1] ?? null;
+		return { orderBookList, lastTrade, lastLatency };
+	}, [state.orderBooks, state.tradeTape, state.latencySeries]);
 
 	return {
 		...state,

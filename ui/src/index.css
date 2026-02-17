@@ -249,10 +249,6 @@ body {
 	background: #6d28d9;
 }
 
-.legend-swatch.state {
-	background: #f59e0b;
-}
-
 .telemetry-body {
 	flex: 1;
 	min-height: 0;
@@ -322,10 +318,6 @@ body {
 
 .telemetry-window.window-anomaly {
 	fill: #fecaca;
-}
-
-.telemetry-anomaly {
-	fill: #dc2626;
 }
 
 .tbl-head,

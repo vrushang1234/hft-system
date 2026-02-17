@@ -94,10 +94,6 @@ export default function TelemetryChart({
 						<span className="legend-swatch ch-b" />
 						Channel B
 					</span>
-					<span className="legend-item">
-						<span className="legend-swatch state" />
-						Anomaly/Unstable
-					</span>
 				</div>
 			</div>
 			<div className="telemetry-body">
@@ -151,17 +147,6 @@ export default function TelemetryChart({
 					<g clipPath={`url(#${clipId})`}>
 						<path d={linePath("chA")} className="telemetry-line ch-a" />
 						<path d={linePath("chB")} className="telemetry-line ch-b" />
-						{series
-							.filter((point) => point.state === "anomaly")
-							.map((point) => (
-								<circle
-									key={`anom-${point.t}`}
-									cx={scaleX(point.t)}
-									cy={scaleY(point.chA)}
-									r={2.2}
-									className="telemetry-anomaly"
-								/>
-							))}
 					</g>
 					{events.map((event) => (
 						<g key={`${event.label}-${event.t}`}>
