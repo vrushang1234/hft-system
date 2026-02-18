@@ -11,7 +11,7 @@ module tb_MultiQueue();
 
     logic                  clk;
     logic                  rst;
-    logic                  op_en;       // Whether or not to execute the instruction
+    logic                  op_en;
     logic [1:0]            instr;
     logic [DATA_WIDTH-1:0] input_item;
 
@@ -50,7 +50,7 @@ module tb_MultiQueue();
 
         #4;
 
-        // --- Insert Operations ---
+        // --- Insert ---
         input_item = 72'hAAAAAAAAAAAAAAAAAA;
         instr      = 2'b01;
         op_en      = 1;
@@ -67,7 +67,7 @@ module tb_MultiQueue();
 
         #2 op_en = 0;
 
-        // --- Remove Operations ---
+        // --- Remove ---
         #2 instr   = 2'b10;
         input_item = 72'hXXXXXXXXXXXXXXAAAA;
         op_en      = 1;
@@ -77,6 +77,19 @@ module tb_MultiQueue();
         #2 op_en = 1; 
         
         verify_output(72'hAAAAAAAAAAAAAAAAAA); 
+
+        #2 op_en = 0;
+        
+        // --- InsRem ---
+        #2 instr   = 2'b11;
+        input_item = 72'hCCCCCCCCCCCCCCCCCC;
+        op_en      = 1;
+
+        #2 op_en = 0;
+
+        #2 op_en = 1;
+        
+        verify_output(72'hBBBBBBBBBBBBBBBBBB);
 
         #2 op_en = 0;
         
