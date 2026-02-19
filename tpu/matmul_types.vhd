@@ -22,5 +22,11 @@ package matmul_types is
     -- 64 rows of product-row
     type prod_matrix64x5 is array(0 to 63) of prod_row5;
 
+    -- For Layer 2
+    type weight_matrix_64x64 is array (0 to 63, 0 to 63) of signed(7 downto 0);
+    
+    -- For Layer 3
+    type weight_matrix_2x64 is array (0 to 1, 0 to 63) of signed(7 downto 0);
+
 end package;
 

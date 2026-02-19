@@ -49,7 +49,8 @@ begin
     sum_gen : for i in 0 to 63 generate
         C_int(i) <= P3(i)(0) + P3(i)(1) + P3(i)(2) + P3(i)(3) + P3(i)(4);
     end generate sum_gen;
-
+    
+    process(clk)
     begin
         if rising_edge(clk) then
             C <= C_int;
