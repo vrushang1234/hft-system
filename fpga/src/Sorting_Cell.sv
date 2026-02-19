@@ -82,29 +82,18 @@ module Sorting_Cell (
   
   
     always_comb begin 
-        sram_we = 1'b0;
         if (instr_ff_0 && instr_ff_1) begin                     // INSREM
-            if (input_item_ff > sram_dataout) begin
-                if (input_item_ff <= right_item)
-                    sram_datain = input_item_ff;
-                else
-                    sram_datain = right_item;
-                sram_we = 1'b1;
-            end
+            sram_datain = input_item_ff <= right_item ? input_item_ff : right_item;
         end
         else if (instr_ff_0) begin                              // INSERT
             if (input_item_ff <= sram_dataout) begin
-                if (input_item_ff > left_item)
-                    sram_datain = input_item_ff;
-                else 
-                    sram_datain = left_item;
-                sram_we = 1'b1;
+                sram_datain = input_item_ff > left_item ? input_item_ff : left_item;
             end
         end 
         else if (instr_ff_1) begin                              // REMOVE
             sram_datain = right_item;
-            sram_we = 1'b1;
         end
+        sram_we = instr_ff_0 || instr_ff_1 ? 1'b1 : 1'b0;
         this_item = sram_dataout;
     end
 

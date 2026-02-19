@@ -80,6 +80,8 @@ module tb_MultiQueue();
 
         #2 op_en = 0;
         
+        #10
+        
         // --- InsRem ---
         #2 instr   = 2'b11;
         input_item = 72'hCCCCCCCCCCCCCCCCCC;
