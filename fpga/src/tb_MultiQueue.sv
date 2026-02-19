@@ -1,11 +1,7 @@
 `timescale 1ns / 1ps
 
-`timescale 1ns / 1ps
-
-// TODO:
-// - Test INSREM
 // - Implement small clusters with shared flip flops for sorting cells
-// - Find a better way to check and handle #TCQ = 100ps read delay
+// - #TCQ = 100ps read delay intended for simulation, in practice, output delay should be measured and handled accordingly
 
 import Constants::*;
 
@@ -52,7 +48,7 @@ module tb_MultiQueue();
 
         #4;
 
-        // --- Insert ---
+        // --- INSERT ---
         input_item = 72'hAAAAAAAAAAAAAAAAAA;
         instr      = 2'b01;
         op_en      = 1;
@@ -69,7 +65,7 @@ module tb_MultiQueue();
 
         #2 op_en = 0;
 
-        // --- Remove ---
+        // --- REMOVE ---
         #2 instr   = 2'b10;
         input_item = 72'hXXXXXXXXXXXXXXAAAA;
         op_en      = 1;
@@ -84,9 +80,9 @@ module tb_MultiQueue();
         
         #10
         
-        // --- InsRem ---
+        // --- INSREM ---
         #2 instr   = 2'b11;
-        input_item = 72'hCCCCCCCCCCCCCCCCCC;
+        input_item = 72'hCCCCCCCCCCCCCCBBBB;
         op_en      = 1;
 
         #2 op_en = 0;

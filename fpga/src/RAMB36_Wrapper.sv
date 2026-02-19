@@ -9,7 +9,7 @@ import Constants::*;
 //////////////////////////////////////////////////////////////////////////////////
 
 module RAMB36_Wrapper#(
-    parameter INIT_VAL
+    parameter bit INIT_VAL
 )(
     input  logic                  clk,
     input  logic                  rst,
@@ -45,8 +45,8 @@ module RAMB36_Wrapper#(
         .INIT_FILE                 (INIT_VAL ? "ram_init_1.mem" : "NONE"),
 
         // Value during reset
-        .SRVAL_A                   (INIT_VAL ? {36{1'b1}} : 36'b0),
-        .SRVAL_B                   (INIT_VAL ? {36{1'b1}} : 36'b0),
+        .SRVAL_A                   ({DATA_WIDTH{INIT_VAL}}),
+        .SRVAL_B                   ({DATA_WIDTH{INIT_VAL}}),
 
         .SIM_COLLISION_CHECK       ("ALL")
 

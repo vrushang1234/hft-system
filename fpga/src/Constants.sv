@@ -15,7 +15,7 @@ package Constants;
     parameter DATA_WIDTH = BLOCK_WIDTH * 2;                     // Width of each priority queue item
 
     // 1-bit wide by 32K deep to 36-bit wide by 1K deep
-    parameter ADDR_DEPTH = 1024 / 36 * BLOCK_WIDTH;
+    parameter ADDR_DEPTH = 1024 / (36 / BLOCK_WIDTH);
     parameter ADDR_WIDTH = $clog2(ADDR_DEPTH);    
   
 endpackage

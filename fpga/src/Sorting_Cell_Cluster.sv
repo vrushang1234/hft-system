@@ -7,7 +7,7 @@ import Constants::*;
 //////////////////////////////////////////////////////////////////////////////////
 
 module Sorting_Cell_Cluster #(
-    parameter INIT_VAL = 0
+    parameter bit INIT_VAL = 1'b0
 )(
     input  logic                  clk,
     input  logic                  rst,
@@ -74,14 +74,14 @@ module Sorting_Cell_Cluster #(
 
     initial begin
         for (int k = 1; k < BLOCKS+1; k = k + 1) begin
-            links[k] = INIT_VAL ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
+            links[k] = {DATA_WIDTH{INIT_VAL}};
         end
-        links[0] = INIT_VAL ? {DATA_WIDTH{1'b0}} : {DATA_WIDTH{1'b1}};
-        links[BLOCKS+1] = INIT_VAL ? {DATA_WIDTH{1'b0}} : {DATA_WIDTH{1'b1}};
+        links[0] = {DATA_WIDTH{INIT_VAL}};
+        links[BLOCKS+1] = {DATA_WIDTH{INIT_VAL}};
     end
 
     always_comb begin
-        output_item = instr_ff_1 ? links[1] : (INIT_VAL ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}});
+        output_item = instr_ff_1 ? links[1] : {DATA_WIDTH{INIT_VAL}};
     end
 
 endmodule

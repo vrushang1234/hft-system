@@ -7,7 +7,7 @@ import Constants::*;
 //////////////////////////////////////////////////////////////////////////////////
 
 module BRAM_Cluster #(
-    parameter INIT_VAL = 0
+    parameter bit INIT_VAL = 1'b0
 )(
     input  logic                  clk,
     input  logic                  rst,
@@ -30,7 +30,6 @@ module BRAM_Cluster #(
                 .wr_en   (wr_en[i]),
                 .addr    (addr),
                 .wr_data (wr_data[i]),
-                
                 .rd_data (rd_data[i])
             );
         end
