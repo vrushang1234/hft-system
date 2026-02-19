@@ -1,0 +1,14 @@
+# HFT TPU 
+
+## Structure
+- /tpu: VHDL Matrix Multiplication units (Layer 1-3).
+- /math: Verilog fixed-point activation functions (Tanh/Softmax).
+- /rl-environment: Weights exported from the PPO model ('tpu_weights_pkg.vhd').
+
+## Verification (Docker for Math folder)
+Run `make evaluate` to verify math accuracy against Python models.
+
+## Vivado Setup 
+1. Import all `.v` and `.vhd` files.
+2. Set `tpu_nn_top.v` as the Global Top.
+3. Ensure `.mem` files are included in the project resources for LUT initialization (in simulation).
