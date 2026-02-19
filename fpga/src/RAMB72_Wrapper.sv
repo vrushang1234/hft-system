@@ -48,10 +48,8 @@ module RAMB72_Wrapper#(
                 .INIT_FILE                 (INIT_VAL ? "ram_init_1.mem" : "NONE"),
 
                 // Value during reset
-                .SRVAL_A                   ({DATA_WIDTH{INIT_VAL}}),
-                .SRVAL_B                   ({DATA_WIDTH{INIT_VAL}}),
-
-                .SIM_COLLISION_CHECK       ("ALL")
+                .SRVAL_A                   ({BLOCK_WIDTH{INIT_VAL}}),
+                .SRVAL_B                   ({BLOCK_WIDTH{INIT_VAL}})
 
             ) RAMB36E1_inst (
                 // Port A Address/Control Signals: 16-bit (each) input: Port A address and control signals (read port when RAM_MODE="SDP")
@@ -59,6 +57,12 @@ module RAMB72_Wrapper#(
                 .CLKARDCLK     (clk),                                                     // 1-bit input: A port clock/Read clock
                 .ENARDEN       (en),                                                      // 1-bit input: A port enable/Read enable
                 .RSTRAMARSTRAM (rst),                                                     // 1-bit input: A port set/reset
+                
+                // Ground remaining Port A Write and Register control pins
+                .WEA           (4'b0000),
+                .REGCEAREGCE   (1'b0),
+                .DIADI         (32'h0),
+                .DIPADIP       (4'h0),
 
                 // Port A Data: 16-bit (each) output: Port A data
                 .DOADO         (rd_data[i*BLOCK_WIDTH+DATA_BITS-1 : i*BLOCK_WIDTH]),             // 32-bit output: A port data/LSB data
@@ -70,6 +74,11 @@ module RAMB72_Wrapper#(
                 .ENBWREN       (en),                                                      // 1-bit input: B port enable/Write enable
                 .RSTRAMB       (rst),                                                     // 1-bit input: B port register enable
                 .WEBWE         ({8{wr_en}}),                                              // 4-bit input: B port write enable/Write enable
+                
+                // Ground remaining Port B Write and Register control pins
+                .REGCEB        (1'b0),
+                .DOBDO         (),                   // Explicitly leave read outputs floating
+                .DOPBDOP       (),
 
                 // Port B Data: 16-bit (each) input: Port B data
                 .DIBDI         (wr_data[i*BLOCK_WIDTH+DATA_BITS-1 : i*BLOCK_WIDTH]),             // 32-bit input: B port data/MSB data

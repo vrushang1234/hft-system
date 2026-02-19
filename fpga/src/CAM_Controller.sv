@@ -11,9 +11,11 @@ module CAM_Controller(
     input  logic                  rst,
     input  state_t                instr_valid,
     input  logic [DATA_WIDTH-1:0] input_item,
+    input  logic                  delete_item,
 
     output logic                  hit,
-    output logic [ADDR_WIDTH-1:0] out_addr
+    output logic [ADDR_WIDTH-1:0] out_addr,
+    output logic                  full
 );
 
     logic [ADDR_WIDTH-1:0] write_ptr;
@@ -25,7 +27,7 @@ module CAM_Controller(
     wire                   rd_en       = (instr_valid == VALID);
     logic                  wr_en       = 0;
 
-    wire  [15:0]           cam_tagin   = (instr_valid == VALID) ? stock_id : stock_id_ff;
+    wire  [15:0]           cam_tagin   = rd_en ? stock_id : stock_id_ff;
 
     FF_Load #(
         .DATA_WIDTH(16)
@@ -51,6 +53,18 @@ module CAM_Controller(
         .hit      (hit),
         .out_addr (cam_out_addr)
     );
+    
+//    always_comb begin
+//        empty_addr = '0;
+//        full   = 1'b1;
+        
+//        for (int i = 0; i < BLOCKS; i++) begin
+//            if (!valid[i]) begin
+//                empty_addr = i[ADDR_WIDTH-1:0];
+//                cam_full   = 1'b0;
+//            end
+//        end
+//    end
 
     always_ff @(posedge clk) begin
         if (rst) begin

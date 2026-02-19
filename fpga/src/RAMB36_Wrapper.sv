@@ -45,11 +45,9 @@ module RAMB36_Wrapper#(
         .INIT_FILE                 (INIT_VAL ? "ram_init_1.mem" : "NONE"),
 
         // Value during reset
-        .SRVAL_A                   ({DATA_WIDTH{INIT_VAL}}),
-        .SRVAL_B                   ({DATA_WIDTH{INIT_VAL}}),
-
-        .SIM_COLLISION_CHECK       ("ALL")
-
+        .SRVAL_A                   ({BLOCK_WIDTH{INIT_VAL}}),
+        .SRVAL_B                   ({BLOCK_WIDTH{INIT_VAL}})
+        
     ) RAMB36E1_inst (
         // Port A Address/Control Signals: 16-bit (each) input: Port A address and control signals (read port when RAM_MODE="SDP")
         .ADDRARDADDR   ({(ADDR_BUS_WIDTH - ADDR_WIDTH - 5)'(0), addr, 5'b0}),     // 16-bit input: A port address/Read address

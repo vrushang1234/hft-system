@@ -36,11 +36,11 @@ module queue #(
     reg trig_pop = 1'b0;
     reg trig_peek = 1'b0;
     
-    // initial begin
+     initial begin
         // Initialize from a hexadecimal file named "mem_init.mem" for simulation (not synthesizable)
-        // $readmemh("mem_init.mem", mem); 
+         $readmemh("mem_init.mem", mem); 
         // $readmemh("mem_init.mem", mem, 0, 127); 
-    // end
+     end
     
     always @(posedge push)
         trig_push = 1'b1;

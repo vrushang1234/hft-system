@@ -23,7 +23,6 @@ module MultiQueue (
 
     state_t               instr_state;
     wire                  addr_valid;
-    wire [ADDR_WIDTH-1:0] item_addr;
 
     wire [ADDR_WIDTH-1:0] cam_out_addr;
     wire [ADDR_WIDTH-1:0] sram_addr;

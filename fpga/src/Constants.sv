@@ -6,7 +6,7 @@ package Constants;
     
     parameter ADDR_BUS_WIDTH = 16;                            // address input bus width
 
-    parameter BLOCKS = 25;                                    // Number of BRAM Blocks to be initialized, equal to the depth of each priority queue
+    parameter BLOCKS = 16;                                    // Number of BRAM Blocks to be initialized, equal to the depth of each priority queue
 
     parameter DATA_BITS   = 32;
     parameter PARITY_BITS = 4;
@@ -15,7 +15,7 @@ package Constants;
     parameter DATA_WIDTH = BLOCK_WIDTH * 2;                     // Width of each priority queue item
 
     // 1-bit wide by 32K deep to 36-bit wide by 1K deep
-    parameter ADDR_DEPTH = 1024 / (36 / BLOCK_WIDTH);
+    parameter ADDR_DEPTH = 1024 * BLOCK_WIDTH / 36;
     parameter ADDR_WIDTH = $clog2(ADDR_DEPTH);    
   
 endpackage
