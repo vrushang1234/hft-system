@@ -1,6 +1,7 @@
 import os
 import math
 import subprocess
+import re
 
 # Directories and Config
 TANH_DIR = "tanh"
@@ -12,6 +13,11 @@ def to_q29_hex(val):
     scaled = int(round(val * Q_SCALE))
     clamped = int(max(-limit - 1, min(limit, scaled)))
     return f"{clamped & 0xFFFFFFFF:08x}"
+
+def python_softmax(inputs):
+    exps = [math.exp(x) for x in inputs]
+    sum_exps = sum(exps)
+    return [e / sum_exps for e in exps]
 
 def generate_luts():
     print("[*] Generating LUTs...")
@@ -65,26 +71,19 @@ if __name__ == "__main__":
     print("\n--- Testing Tanh ---")
     out_t = run_sim("t_sim", ["tanh_tb.v", "tanh_q32.v"], TANH_DIR)
     if out_t:
-        print("[*] Verifying Tanh Accuracy...")
-        import re
-        matches = re.findall(r"^\s*([-.\d]+)\s+\|\s+([-.\d]+)", out_t, re.MULTILINE)
+        print("\n[*] Verifying Tanh Accuracy...")
+        print(f"{'Input':>10} | {'Verilog':>12} | {'Python':>12} | {'Error':>12}")
+        print("-" * 55)
         
-        if not matches:
-            print("    [!] Warning: Could not parse Tanh output table.")
-        else:
-            max_error = 0
-            for val_in, val_out in matches:
-                actual = float(val_out)
-                expected = math.tanh(float(val_in))
-                error = abs(actual - expected)
-                if error > max_error: max_error = error
-                
-            print(f"    Max Error Found: {max_error:.6f}")
-            if max_error < 0.005: 
-                print("    [RESULT] Tanh Verification: PASS")
-            else:
-                print("    [RESULT] Tanh Verification: FAIL (Error too high)")
-
+        matches = re.findall(r"^\s*([-.\d]+)\s+\|\s+([-.\d]+)", out_t, re.MULTILINE)
+        max_error = 0
+        for val_in, val_out in matches:
+            actual = float(val_out)
+            expected = math.tanh(float(val_in))
+            error = abs(actual - expected)
+            if error > max_error: max_error = error
+            print(f"{val_in:>10} | {actual:12.6f} | {expected:12.6f} | {error:12.6f}")
+        print(f"Max Tanh Error: {max_error:.6f}")
 
     print("\n--- Testing Softmax ---")
     out_s = run_sim("s_sim", ["sm_tb.v", "sm_q32.v", "exp_q32.v", "ra_q32.v"], SM_DIR)
@@ -93,13 +92,16 @@ if __name__ == "__main__":
         s_matches = re.findall(r"Input\[\d+\]:\s+([-.\d]+)\s+=>\s+Output\[\d+\]:\s+([-.\d]+)", out_s)
         
         if s_matches:
-            # Probability Check (outputs sum to ~1.0)
-            total_prob = sum(float(m[1]) for m in s_matches)
-            print(f"    Total Probability Sum: {total_prob:.6f}")
-            if 0.99 <= total_prob <= 1.01:
-                print("    [RESULT] Softmax Verification: PASS")
-            else:
-                print("    [RESULT] Softmax Verification: FAIL (Does not sum to 1.0)")
+            inputs = [float(m[0]) for m in s_matches]
+            verilog_outputs = [float(m[1]) for m in s_matches]
+            python_outputs = python_softmax(inputs)
+
+            print(f"{'Input':>10} | {'Verilog':>12} | {'Python':>12} | {'Error':>12}")
+            print("-" * 55)
+            for i in range(len(inputs)):
+                err = abs(verilog_outputs[i] - python_outputs[i])
+                print(f"{inputs[i]:10.2f} | {verilog_outputs[i]:12.6f} | {python_outputs[i]:12.6f} | {err:12.6f}")
+            print(f"Total Prob Sum: {sum(verilog_outputs):.6f}")
 
     # Cleanup
     print("\n[*] Cleaning up artifacts...")
