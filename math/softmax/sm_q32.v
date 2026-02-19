@@ -3,57 +3,43 @@
 // Scaling: 1.0 = 32'sd536870912
 
 module sm_q32 (
-    input  logic signed [31:0] x [32], 
-    output logic signed [31:0] y [32]
+    input  logic clk,
+    input  logic rst,
+    input  logic signed [63:0] d_in,     // Two 32-bit values packed together
+    output logic signed [63:0] prob_out  // Two 32-bit probabilities packed together
 );
 
-    genvar i;
+    // Unpack the input vector into two 32-bit signals
+    wire signed [31:0] x0 = d_in[63:32];
+    wire signed [31:0] x1 = d_in[31:0];
 
-    // Binary Max Finder Tree: this finds the maximum value in the input vector to prevent exp() overflow.
-    wire signed [31:0] m1 [16], m2 [8], m3 [4], m4 [2], maxv;
+    // Find Max (to prevent overflow)
+    wire signed [31:0] maxv = (x0 > x1) ? x0 : x1;
+
+    // Compute Exponentials: e^(x - max)
+    wire [31:0] e0, e1;
     
-    generate
-        for (i = 0; i < 16; i = i + 1) assign m1[i] = (x[2*i] > x[2*i+1]) ? x[2*i] : x[2*i+1];
-        for (i = 0; i < 8;  i = i + 1) assign m2[i] = (m1[2*i] > m1[2*i+1]) ? m1[2*i] : m1[2*i+1];
-        for (i = 0; i < 4;  i = i + 1) assign m3[i] = (m2[2*i] > m2[2*i+1]) ? m2[2*i] : m2[2*i+1];
-        for (i = 0; i < 2;  i = i + 1) assign m4[i] = (m3[2*i] > m3[2*i+1]) ? m3[2*i] : m3[2*i+1];
-    endgenerate
-    assign maxv = (m4[0] > m4[1]) ? m4[0] : m4[1];
+    exp_q32 exp0 (.x(x0 - maxv), .y(e0));
+    exp_q32 exp1 (.x(x1 - maxv), .y(e1));
 
-    // Exponential Units: this subtract maxv from each input (so all inputs are <= 0) and compute e^x.
-    wire [31:0] e [32];
-    generate
-        for (i = 0; i < 32; i = i + 1) begin : exp_gen
-            exp_q32 exp_inst (
-                .x(x[i] - maxv), 
-                .y(e[i])
-            );
-        end
-    endgenerate
+    // Sum the Exponentials
+    // We add bits to prevent overflow during summation
+    wire [32:0] sumv = {1'b0, e0} + {1'b0, e1};
 
-    // Binary Adder Tree: Summing 32 values of max 1.0 requires 37 bits to avoid overflow (max sum = 32.0).
-    wire [36:0] s1 [16], s2 [8], s3 [4], s4 [2], sumv;
-    generate
-        for (i = 0; i < 16; i = i + 1) assign s1[i] = {5'b0, e[2*i]} + {5'b0, e[2*i+1]};
-        for (i = 0; i < 8;  i = i + 1) assign s2[i] = s1[2*i] + s1[2*i+1];
-        for (i = 0; i < 4;  i = i + 1) assign s3[i] = s2[2*i] + s2[2*i+1];
-        for (i = 0; i < 2;  i = i + 1) assign s4[i] = s3[2*i] + s3[2*i+1];
-    endgenerate
-    assign sumv = s4[0] + s4[1];
-
-    // Reciprocal Approximation: this computes 1 / sumv using the pre-calculated LUT.
+    // Reciprocal: 1 / sumv
     wire [31:0] inv_sum;
     ra_q32 recip_inst (
-        .x(sumv), 
+        .x({4'b0, sumv}), // Adjusting bit-width for your Reciprocal unit
         .y(inv_sum)
     );
 
-    // y_i = e_i * (1 / sum)
-    generate
-        for (i = 0; i < 32; i = i + 1) begin : mult_gen
-            wire [63:0] prod = $unsigned(e[i]) * $unsigned(inv_sum);
-            assign y[i] = prod[60:29]; // Shift right by 29 bits to return to Q2.29
-        end
-    endgenerate
+    // Final Normalization: y = e * (1/sum)
+    wire [63:0] prod0 = $unsigned(e0) * $unsigned(inv_sum);
+    wire [63:0] prod1 = $unsigned(e1) * $unsigned(inv_sum);
+
+    // Pack the results back into a single output vector
+    // Shifting by 29 to handle Q2.29 fixed point math
+    assign prob_out[63:32] = prod0[60:29]; 
+    assign prob_out[31:0]  = prod1[60:29];
 
 endmodule

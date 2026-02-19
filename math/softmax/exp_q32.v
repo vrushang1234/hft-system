@@ -2,23 +2,22 @@
 // Input: x <= 0, Range [-4.0, 0.0]
 // Output: y in range (0, 1.0]
 
-module exp_q32 (
-    input  signed [31:0] x,
-    output reg    [31:0] y
-);
+module exp_q32 (x, y);
+    input  [31:0] x;
+    output [31:0] y;
+
     // 256-entry LUT for the range [-4.0, 0.0]
     reg [31:0] lut [0:255];
     
-    // Using a 10-bit fraction for the index to keep it smooth
-    // Range -4.0 (32'h80000000) to 0.0 in Q2.29:
+    // Shift -4.0 to 0.0. Range becomes [0.0, 4.0]
+    wire [31:0] x_offset = x + 32'h80000000;
     
-    wire [7:0] idx = (x <= -32'sd2147483648) ? 8'd0 : // Clamp to -4.0
-                     (x >= 0)                ? 8'd255 :
-                     (x[30:23] + 8'd128);             // Map range to 0-255
+    // Check Bit 31: If Bit 31 is 1, it means we hit 4.0 (or overflowed slightly), --> clamp to index 255 (max value). Else, we take bits [30:23].
+    wire [7:0] idx = (x_offset[31]) ? 8'd255 : x_offset[30:23];
 
     initial begin
         $readmemh("exp_lut.mem", lut);
     end
 
-    always @(*) y = lut[idx];
+    assign y = lut[idx];
 endmodule
