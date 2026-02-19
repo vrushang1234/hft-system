@@ -74,14 +74,14 @@ module Sorting_Cell_Cluster #(
 
     initial begin
         for (int k = 1; k < BLOCKS+1; k = k + 1) begin
-            links[k] = {DATA_WIDTH{INIT_VAL}};
+            links[k] = INIT_VAL ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}};
         end
-        links[0] = {DATA_WIDTH{INIT_VAL}};
-        links[BLOCKS+1] = {DATA_WIDTH{INIT_VAL}};
+        links[0] = INIT_VAL ? {DATA_WIDTH{1'b0}} : {DATA_WIDTH{1'b1}};
+        links[BLOCKS+1] = INIT_VAL ? {DATA_WIDTH{1'b0}} : {DATA_WIDTH{1'b1}};
     end
 
     always_comb begin
-        output_item = instr_ff_1 ? links[1] : {DATA_WIDTH{INIT_VAL}};
+        output_item = instr_ff_1 ? links[1] : (INIT_VAL ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}});
     end
 
 endmodule

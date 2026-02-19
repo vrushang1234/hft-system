@@ -60,7 +60,7 @@ module MultiQueue (
     );
 
     BRAM_Cluster #(
-        .INIT_VAL(1)
+        .INIT_VAL(1'b1)
     ) BRAM_Cluster_inst (
         .clk     (clk),
         .rst     (rst),
