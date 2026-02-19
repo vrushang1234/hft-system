@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 package Constants;
     
     typedef enum logic {INVALID, VALID} state_t;

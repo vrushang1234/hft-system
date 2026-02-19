@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+`timescale 1ns / 1ps
+
 // TODO:
 // - Test INSREM
 // - Implement small clusters with shared flip flops for sorting cells
