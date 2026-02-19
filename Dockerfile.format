@@ -1,0 +1,25 @@
+# We switch to Debian (Bookworm) for better package stability
+FROM python:3.12-slim-bookworm
+
+# Install hardware tools and system dependencies
+# iverilog: Verilog simulator
+# ghdl: VHDL simulator
+RUN apt-get update && apt-get install -y \
+    iverilog \
+    ghdl \
+    make \
+    bash \
+    build-essential \
+    gtkwave \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install standard formatters
+RUN npm install -g prettier@3.7.4 \
+    && pip install black==25.12.0 isort==7.0.0
+
+WORKDIR /repo
+
+# Start in bash so we can run our Makefile
+ENTRYPOINT ["/bin/bash"]
