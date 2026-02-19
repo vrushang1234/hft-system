@@ -3,25 +3,45 @@
 module tanh_tb;
     reg  signed [31:0] x;
     wire signed [31:0] y;
+    reg clk;
 
+    // Instantiate DUT
     tanh_q32 dut (.x(x), .y(y));
 
     real q_scale = 536870912.0; // 2^29
-    integer i;
+    integer k; // Loop counter
+    real float_x, float_y;
+
+    // Clock generation
+    initial clk = 0;
+    always #5 clk = ~clk;
 
     initial begin
         $dumpfile("tanh.vcd");
         $dumpvars(0, tanh_tb);
 
-        $display("%-12s %-12s %-12s %-12s", "x(Hex)", "float_x", "y(Hex)", "float_tanh");
+        $display("\n--- Tanh Q2.29 Check ---");
+        $display("%-10s | %-10s | %-10s | %-10s", "Input(F)", "Output(F)", "Input(H)", "Output(H)");
+        $display("------------------------------------------------------------");
 
-        // Test from -2.0 to 2.0 in steps of 0.25
-        // 0.25 in Q2.29 is 0.25 * 2^29 = 134217728
-        for (i = -1073741824; i <= 1073741824; i += 134217728) begin
-            x = i;
-            #1;
-            $display("%h\t%0f\t%h\t%0f", x, x / q_scale, y, y / q_scale);
+        x = 32'h80000000; 
+
+        // Run 64 steps across the full range
+        for (k = 0; k < 64; k = k + 1) begin
+            
+            @(posedge clk); 
+            #1; // Allow signal to settle
+
+            float_x = x / q_scale;
+            float_y = $signed(y) / q_scale;
+
+            $display("%10.4f | %10.4f | %h | %h", float_x, float_y, x, y);
+
+            // Increment x by a large chunk (approx 0.125 in float)
+            x = x + 32'd67108864;
         end
+
+        $display("------------------------------------------------------------");
         $finish;
     end
 endmodule
