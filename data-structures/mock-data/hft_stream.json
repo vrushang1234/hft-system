@@ -1,0 +1,330 @@
+[
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000000000000,
+			"symbol": "AAPL",
+			"bids": [
+				{ "price": 178.24, "size": 1200 },
+				{ "price": 178.23, "size": 700 }
+			],
+			"asks": [
+				{ "price": 178.26, "size": 980 },
+				{ "price": 178.27, "size": 610 }
+			]
+		}
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000050000000,
+			"symbol": "MSFT",
+			"bids": [
+				{ "price": 412.58, "size": 860 },
+				{ "price": 412.57, "size": 420 }
+			],
+			"asks": [
+				{ "price": 412.61, "size": 940 },
+				{ "price": 412.62, "size": 500 }
+			]
+		}
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000100000000,
+			"symbol": "AMZN",
+			"bids": [
+				{ "price": 165.92, "size": 1110 },
+				{ "price": 165.91, "size": 640 }
+			],
+			"asks": [
+				{ "price": 165.95, "size": 1020 },
+				{ "price": 165.96, "size": 520 }
+			]
+		}
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000150000000,
+			"symbol": "TSLA",
+			"bids": [
+				{ "price": 241.12, "size": 780 },
+				{ "price": 241.1, "size": 520 }
+			],
+			"asks": [
+				{ "price": 241.15, "size": 910 },
+				{ "price": 241.16, "size": 460 }
+			]
+		}
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000200000000,
+			"symbol": "NVDA",
+			"bids": [
+				{ "price": 713.48, "size": 640 },
+				{ "price": 713.45, "size": 390 }
+			],
+			"asks": [
+				{ "price": 713.52, "size": 730 },
+				{ "price": 713.55, "size": 420 }
+			]
+		}
+	},
+	{
+		"type": "trade_tape",
+		"data": { "ts": 1700000000250000000, "price": 178.25, "size": 220, "aggressor": "BUY" }
+	},
+	{
+		"type": "latency_race",
+		"data": {
+			"my_latency_ns": 124800,
+			"fastest_competitor_ns": 109500,
+			"race_outcome": "LOST",
+			"fill_probability": 0.36
+		}
+	},
+	{
+		"type": "active_orders",
+		"data": [
+			{
+				"order_id": 1001,
+				"side": "B",
+				"price": 178.23,
+				"size": 350,
+				"queue_ahead": 820,
+				"queue_behind": 260,
+				"status": "ACTIVE"
+			},
+			{
+				"order_id": 1002,
+				"side": "S",
+				"price": 412.62,
+				"size": 200,
+				"queue_ahead": 540,
+				"queue_behind": 430,
+				"status": "ACTIVE"
+			}
+		]
+	},
+	{
+		"type": "inventory_pnl",
+		"data": {
+			"position": 120,
+			"realized_pnl": 1843.2,
+			"unrealized_pnl": -212.6,
+			"inventory_skew": "LONG"
+		}
+	},
+	{
+		"type": "system_health",
+		"data": { "event_rate": 184500, "dropped_events": 2, "replay_speed": 1.02 }
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000300000000,
+			"symbol": "AAPL",
+			"bids": [
+				{ "price": 178.27, "size": 1380 },
+				{ "price": 178.26, "size": 760 }
+			],
+			"asks": [
+				{ "price": 178.29, "size": 940 },
+				{ "price": 178.3, "size": 540 }
+			]
+		}
+	},
+	{
+		"type": "trade_tape",
+		"data": { "ts": 1700000000350000000, "price": 178.28, "size": 180, "aggressor": "SELL" }
+	},
+	{
+		"type": "latency_race",
+		"data": {
+			"my_latency_ns": 101200,
+			"fastest_competitor_ns": 112800,
+			"race_outcome": "WON",
+			"fill_probability": 0.72
+		}
+	},
+	{
+		"type": "active_orders",
+		"data": [
+			{
+				"order_id": 1003,
+				"side": "B",
+				"price": 165.91,
+				"size": 420,
+				"queue_ahead": 690,
+				"queue_behind": 210,
+				"status": "ACTIVE"
+			}
+		]
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000400000000,
+			"symbol": "MSFT",
+			"bids": [
+				{ "price": 412.61, "size": 910 },
+				{ "price": 412.6, "size": 540 }
+			],
+			"asks": [
+				{ "price": 412.63, "size": 870 },
+				{ "price": 412.64, "size": 480 }
+			]
+		}
+	},
+	{
+		"type": "trade_tape",
+		"data": { "ts": 1700000000450000000, "price": 412.62, "size": 310, "aggressor": "BUY" }
+	},
+	{
+		"type": "latency_race",
+		"data": {
+			"my_latency_ns": 138900,
+			"fastest_competitor_ns": 120300,
+			"race_outcome": "LOST",
+			"fill_probability": 0.41
+		}
+	},
+	{
+		"type": "inventory_pnl",
+		"data": {
+			"position": 98,
+			"realized_pnl": 1910.4,
+			"unrealized_pnl": -160.2,
+			"inventory_skew": "LONG"
+		}
+	},
+	{
+		"type": "system_health",
+		"data": { "event_rate": 176900, "dropped_events": 3, "replay_speed": 0.99 }
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000500000000,
+			"symbol": "AMZN",
+			"bids": [
+				{ "price": 165.96, "size": 1320 },
+				{ "price": 165.95, "size": 700 }
+			],
+			"asks": [
+				{ "price": 165.99, "size": 980 },
+				{ "price": 166.0, "size": 560 }
+			]
+		}
+	},
+	{
+		"type": "trade_tape",
+		"data": { "ts": 1700000000550000000, "price": 165.97, "size": 260, "aggressor": "SELL" }
+	},
+	{
+		"type": "latency_race",
+		"data": {
+			"my_latency_ns": 111400,
+			"fastest_competitor_ns": 108900,
+			"race_outcome": "WON",
+			"fill_probability": 0.81
+		}
+	},
+	{
+		"type": "active_orders",
+		"data": [
+			{
+				"order_id": 1004,
+				"side": "S",
+				"price": 241.16,
+				"size": 280,
+				"queue_ahead": 480,
+				"queue_behind": 360,
+				"status": "ACTIVE"
+			},
+			{
+				"order_id": 1005,
+				"side": "B",
+				"price": 713.45,
+				"size": 190,
+				"queue_ahead": 610,
+				"queue_behind": 240,
+				"status": "ACTIVE"
+			}
+		]
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000600000000,
+			"symbol": "TSLA",
+			"bids": [
+				{ "price": 241.18, "size": 860 },
+				{ "price": 241.17, "size": 560 }
+			],
+			"asks": [
+				{ "price": 241.2, "size": 820 },
+				{ "price": 241.21, "size": 470 }
+			]
+		}
+	},
+	{
+		"type": "order_book_snapshot",
+		"data": {
+			"ts": 1700000000650000000,
+			"symbol": "NVDA",
+			"bids": [
+				{ "price": 713.51, "size": 720 },
+				{ "price": 713.49, "size": 430 }
+			],
+			"asks": [
+				{ "price": 713.54, "size": 760 },
+				{ "price": 713.56, "size": 410 }
+			]
+		}
+	},
+	{
+		"type": "trade_tape",
+		"data": { "ts": 1700000000700000000, "price": 713.52, "size": 210, "aggressor": "BUY" }
+	},
+	{
+		"type": "latency_race",
+		"data": {
+			"my_latency_ns": 129700,
+			"fastest_competitor_ns": 117600,
+			"race_outcome": "LOST",
+			"fill_probability": 0.44
+		}
+	},
+	{
+		"type": "inventory_pnl",
+		"data": {
+			"position": 64,
+			"realized_pnl": 2016.9,
+			"unrealized_pnl": -104.3,
+			"inventory_skew": "LONG"
+		}
+	},
+	{
+		"type": "system_health",
+		"data": { "event_rate": 190200, "dropped_events": 1, "replay_speed": 1.04 }
+	},
+	{
+		"type": "active_orders",
+		"data": [
+			{
+				"order_id": 1006,
+				"side": "B",
+				"price": 178.26,
+				"size": 260,
+				"queue_ahead": 780,
+				"queue_behind": 190,
+				"status": "ACTIVE"
+			}
+		]
+	}
+]
