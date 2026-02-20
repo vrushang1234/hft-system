@@ -9,7 +9,7 @@ module ra_q32 (
     reg [31:0] lut [0:255];
 
     // Indexing based on the integer part of the sum (1.0 to 32.0)
-    wire [7:0] idx = (x >= 37'h400000000) ? 8'd255 : x[33:26]; 
+    wire [7:0] idx = (x >= 37'h40000000) ? 8'd255 : x[28:21]; 
 
     initial begin
         $readmemh("recip_lut.mem", lut);
