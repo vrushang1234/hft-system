@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y \
 RUN npm install -g prettier@3.7.4 \
     && pip install black==25.12.0 isort==7.0.0
 
-WORKDIR /repo
+WORKDIR /app
+COPY . .
 
 # Start in bash so we can run our Makefile
 ENTRYPOINT ["/bin/bash"]
