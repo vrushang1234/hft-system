@@ -33,15 +33,20 @@ def generate_luts():
     os.makedirs(SM_DIR, exist_ok=True)
     with open(os.path.join(SM_DIR, "exp_lut.mem"), "w") as f:
         for i in range(256):
-            x = -4.0 + (i * 4.0 / 256.0)
+            if i == 255:
+                x = 0.0 
+            else:
+                x = -4.0 + ((i + 0.5) * 0.015625)
             f.write(to_q29_hex(math.exp(x)) + "\n")
 
     # Reciprocal LUT
     with open(os.path.join(SM_DIR, "recip_lut.mem"), "w") as f:
         for i in range(256):
-            val_x = i * 0.125 
-            val_y = 1.0 / val_x if val_x > 0.06 else 16.0
-            f.write(to_q29_hex(val_y) + "\n")
+            if i == 255:
+                val_x = 2.0
+            else:
+                val_x = 1.0 + ((i + 0.5) * 0.00390625)
+            f.write(to_q29_hex(1.0 / val_x) + "\n")
 
 def run_sim(name, files, folder):
     out_bin = os.path.join(folder, name)
@@ -89,19 +94,33 @@ if __name__ == "__main__":
     out_s = run_sim("s_sim", ["sm_tb.v", "sm_q32.v", "exp_q32.v", "ra_q32.v"], SM_DIR)
     if out_s:
         print("\n[*] Verifying Softmax Accuracy...")
-        s_matches = re.findall(r"Input\[\d+\]:\s+([-.\d]+)\s+=>\s+Output\[\d+\]:\s+([-.\d]+)", out_s)
+    
+        regex_pattern = r"Input\s*\[x0:\s*([-.\d]+),\s*x1:\s*([-.\d]+)\]\s*=>\s*Output\s*\[p0:\s*([-.\d]+),\s*p1:\s*([-.\d]+)\]"
+        s_matches = re.findall(regex_pattern, out_s)
         
         if s_matches:
-            inputs = [float(m[0]) for m in s_matches]
-            verilog_outputs = [float(m[1]) for m in s_matches]
-            python_outputs = python_softmax(inputs)
-
-            print(f"{'Input':>10} | {'Verilog':>12} | {'Python':>12} | {'Error':>12}")
-            print("-" * 55)
-            for i in range(len(inputs)):
-                err = abs(verilog_outputs[i] - python_outputs[i])
-                print(f"{inputs[i]:10.2f} | {verilog_outputs[i]:12.6f} | {python_outputs[i]:12.6f} | {err:12.6f}")
-            print(f"Total Prob Sum: {sum(verilog_outputs):.6f}")
+            print(f"{'Input (x0, x1)':>15} | {'Verilog (p0, p1)':>20} | {'Python (p0, p1)':>20} | {'Max Error':>12}")
+            print("-" * 75)
+            
+            global_max_err = 0
+            for m in s_matches:
+                x0, x1, p0, p1 = map(float, m)
+            
+                py_p0, py_p1 = python_softmax([x0, x1])
+                
+                err0 = abs(p0 - py_p0)
+                err1 = abs(p1 - py_p1)
+                row_max_err = max(err0, err1)
+                
+                if row_max_err > global_max_err:
+                    global_max_err = row_max_err
+                
+                print(f"{x0:6.2f}, {x1:6.2f} | {p0:9.6f}, {p1:9.6f} | {py_p0:9.6f}, {py_p1:9.6f} | {row_max_err:12.6f}")
+                
+            print("-" * 75)
+            print(f"Max Softmax Error: {global_max_err:.6f}")
+        else:
+            print("[!] Could not parse Softmax output. Check Verilog $display formatting.")
 
     # Cleanup
     print("\n[*] Cleaning up artifacts...")
