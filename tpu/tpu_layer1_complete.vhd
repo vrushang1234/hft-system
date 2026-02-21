@@ -44,8 +44,7 @@ begin
     u_matmul: entity work.matmul_l1
         port map(
             clk => clk,
-            rst => rst,
-            B   => features_array, 
+            B   => features_array,
             C   => matmul_result
         );
 

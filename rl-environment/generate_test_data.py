@@ -3,19 +3,21 @@ from stable_baselines3 import PPO
 from environment import HFTEnv
 
 env = HFTEnv()
-model = PPO.load("ppo_hft") 
+model = PPO.load("ppo_hft")
+
 
 def to_hex8(val):
-    val = val * 127.0  
+    val = val * 127.0
     val = int(val)
     val = max(-128, min(127, val))
     return f"{val & 0xFF:02x}"
 
+
 with open("test_cases.mem", "w") as f:
-    
+
     reset_result = env.reset()
     obs = reset_result[0] if isinstance(reset_result, tuple) else reset_result
-    
+
     for _ in range(100):
         action, _states = model.predict(obs, deterministic=True)
 
@@ -28,7 +30,7 @@ with open("test_cases.mem", "w") as f:
         f.write(f"{f0}{f1}{f2}{f3}{f4}{int(action):02x}\n")
 
         step_result = env.step(action)
-        
+
         if len(step_result) == 4:
             obs, reward, done, info = step_result
         else:

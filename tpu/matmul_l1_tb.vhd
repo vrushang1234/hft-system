@@ -3,6 +3,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.matmul_types.all;
+use work.tpu_weights_pkg.all;
 
 entity matmul_l1_tb is
 end entity;
@@ -15,7 +16,6 @@ architecture tb of matmul_l1_tb is
     -- DUT signals
     signal clk : std_logic := '0';
 
-    signal A : matrix64x5;
     signal B : vector5;
     signal C : vector64;
 
@@ -35,7 +35,6 @@ begin
     uut : entity work.matmul_l1
         port map (
             clk => clk,
-            A   => A,
             B   => B,
             C   => C
         );
@@ -54,15 +53,9 @@ begin
 
         ----------------------------------------------------------------
         -- Apply deterministic stimulus
-        -- A(i,k) = i+k
-        -- B(k)   = k+1
+        -- B(k) = k+1
+        -- Weights come from WEIGHTS_L1 in tpu_weights_pkg
         ----------------------------------------------------------------
-        for i in 0 to 63 loop
-            for k in 0 to 4 loop
-                A(i)(k) <= to_signed(i + k, 8);
-            end loop;
-        end loop;
-
         for k in 0 to 4 loop
             B(k) <= to_signed(k + 1, 8);
         end loop;
@@ -71,12 +64,12 @@ begin
         wait for CLK_PERIOD;
 
         ----------------------------------------------------------------
-        -- Compute golden reference C_ref(i)
+        -- Compute golden reference C_ref(i) using WEIGHTS_L1
         ----------------------------------------------------------------
         for i in 0 to 63 loop
             sum := 0;
             for k in 0 to 4 loop
-                sum := sum + (to_integer(A(i)(k)) * to_integer(B(k)));
+                sum := sum + (to_integer(WEIGHTS_L1(i)(k)) * to_integer(B(k)));
             end loop;
             C_ref(i) <= sum;
         end loop;
