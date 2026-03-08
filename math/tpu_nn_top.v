@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+(* dont_touch = "yes" *)
 module tpu_nn_top (
     input  wire        clk,
     input  wire        rst,
