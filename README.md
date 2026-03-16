@@ -1,5 +1,7 @@
 # High Frequency Trading System
 
+![HFT-System Poster](https://github.com/vrushang1234/hft-system/blob/main/HFT-System-Poster.png?)
+
 A hardware-accelerated high-frequency trading system built on FPGAs, combining a custom Tensor Processing Unit for neural network inference, a high-throughput order matching engine, and a software backend for large-scale order management. The system is designed around the idea that latency-critical decisions should never leave the chip.
 
 ---
@@ -38,7 +40,7 @@ The top-ranked orders are promoted to FPGA BRAM for ultra-low-latency access. Ev
 
 ---
 
-### TPU FPGA — Decision Engine
+### TPU FPGA - Decision Engine
 
 The TPU runs a lightweight neural network entirely in hardware to determine which orders are worth caching. No order book data is sent to the CPU for inference.
 
@@ -52,7 +54,7 @@ The network is implemented as a systolic array — a grid of MAC units that proc
 
 ---
 
-### Order Matching FPGA — MultiQueue Engine
+### Order Matching FPGA - MultiQueue Engine
 
 Incoming orders are matched entirely in on-chip BRAM. The architecture is a MultiQueue: a set of priority queues backed by BRAM blocks, organized as Sorting Cells that push lower-priority items back on insert.
 
