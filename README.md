@@ -1,6 +1,6 @@
 # High Frequency Trading System
 
-![HFT-System Poster](https://github.com/vrushang1234/hft-system/blob/main/HFT-System-Poster.png?)
+![HFT-System Poster](https://github.com/vrushang1234/hft-system/blob/archived-35T/HFT-System-Poster.png?)
 
 A hardware-accelerated high-frequency trading system built on FPGAs, combining a custom Tensor Processing Unit for neural network inference, a high-throughput order matching engine, and a software backend for large-scale order management. The system is designed around the idea that latency-critical decisions should never leave the chip.
 
